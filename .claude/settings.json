@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PreCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "grep -q '\\[~\\]' PROGRESS.md 2>/dev/null && echo 'BLOCKED: task in progress — mark [~] task as [x] or [!] before compacting' && exit 1 || exit 0"
+          }
+        ]
+      }
+    ]
+  }
+}

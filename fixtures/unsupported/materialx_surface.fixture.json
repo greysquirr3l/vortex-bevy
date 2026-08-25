@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "source": "materialx_surface.usda",
+  "ownership": "self-authored",
+  "source_format": "OpenUSD USDA 1.0",
+  "purpose": ["unsupported shader network", "explicit capability report"],
+  "expected_classification": "requires_adapter",
+  "expected_diagnostic": "material.network.materialx.unsupported",
+  "sha256": "9119403b9d609cef037bfa52d80a96d061b1cad7b6fbea4fedf22fdf43c37a97"
+}

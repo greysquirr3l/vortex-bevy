@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "source": "missing_face_indices.usda",
+  "ownership": "self-authored",
+  "source_format": "OpenUSD USDA 1.0",
+  "purpose": ["syntax failure", "no panic", "no partial publication"],
+  "expected_classification": "rejected",
+  "expected_diagnostic": "usd.syntax.invalid",
+  "sha256": "c442de511fc1f47abf7089b27812a9a57551531e426b8bc8a23e7020e79308b1"
+}

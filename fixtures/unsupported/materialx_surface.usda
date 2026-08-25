@@ -1,0 +1,28 @@
+#usda 1.0
+(
+    defaultPrim = "UnsupportedRoot"
+    metersPerUnit = 1
+    upAxis = "Y"
+)
+
+def Xform "UnsupportedRoot"
+{
+    def Mesh "Triangle"
+    {
+        point3f[] points = [(0, 0, 0), (1, 0, 0), (0, 1, 0)]
+        int[] faceVertexCounts = [3]
+        int[] faceVertexIndices = [0, 1, 2]
+        rel material:binding = </UnsupportedRoot/MaterialXMaterial>
+    }
+
+    def Material "MaterialXMaterial"
+    {
+        token outputs:surface.connect = </UnsupportedRoot/MaterialXMaterial/MaterialXShader.outputs:out>
+
+        def Shader "MaterialXShader"
+        {
+            uniform token info:id = "ND_standard_surface_surfaceshader"
+            token outputs:out
+        }
+    }
+}

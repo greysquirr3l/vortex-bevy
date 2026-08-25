@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "source": "triangle_scene.usda",
+  "ownership": "self-authored",
+  "source_format": "OpenUSD USDA 1.0",
+  "purpose": [
+    "hierarchy",
+    "triangle mesh",
+    "UsdPreviewSurface factors",
+    "camera",
+    "distant light",
+    "transform time samples",
+    "Y-up meters"
+  ],
+  "expected_classification": "converted",
+  "sha256": "a54ba04c535a55d73b50a56bb8d45df24fbbb826c43795c04a26f9f821914130"
+}

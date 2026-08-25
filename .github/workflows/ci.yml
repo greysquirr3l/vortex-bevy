@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Quality (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-14, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.97.1
+          components: clippy, rustfmt
+      - name: Build
+        run: cargo build --workspace --all-targets --all-features
+      - name: Test
+        run: cargo test --workspace --all-features
+      - name: Format
+        run: cargo fmt --all -- --check
+      - name: Strict Clippy
+        run: cargo l
+      - name: Documentation
+        run: cargo doc --workspace --no-deps
+
+  supply-chain:
+    name: Supply chain and fixture policy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.97.1
+      - name: Install cargo-deny and cargo-audit
+        run: cargo install --locked cargo-deny cargo-audit
+      - name: Dependency policy
+        run: cargo deny --all-features check
+      - name: Vulnerability audit
+        run: cargo audit
+      - name: Fixture provenance policy
+        run: bash scripts/check-fixture-policy.sh
+      - name: Fixture contract verification
+        run: bash scripts/verify-fixtures.sh
+
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

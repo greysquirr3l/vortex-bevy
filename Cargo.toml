@@ -1,0 +1,35 @@
+[workspace]
+members = ["crates/vortex-core", "crates/vortex-bevy"]
+resolver = "3"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.97.1"
+authors = ["Nick"]
+description = "Authorized Unreal and OpenUSD asset conversion pipeline for Bevy"
+readme = "README.md"
+keywords = ["bevy", "unreal", "usd", "gltf", "assets"]
+categories = ["game-development", "graphics", "command-line-utilities"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/greysquirr3l/vortex-bevy"
+
+[workspace.dependencies]
+anyhow = "1.0.100"
+bevy = { version = "0.19", default-features = false }
+bevy_egui = "0.42.0"
+ron = "0.10.1"
+serde = { version = "1.0.228", features = ["derive"] }
+sha2 = "0.10.9"
+thiserror = "2.0.17"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+indexing_slicing = "deny"
+cast_ptr_alignment = "deny"
+suspicious = "deny"

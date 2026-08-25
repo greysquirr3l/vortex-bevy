@@ -1,0 +1,8 @@
+[build]
+warnings = "deny"
+
+[resolver]
+incompatible-rust-versions = "fallback"
+
+[alias]
+l = "clippy --workspace --all-targets -- -W clippy::all -W clippy::pedantic -W clippy::nursery -W clippy::cargo -W clippy::perf -A clippy::multiple-crate-versions -D warnings"

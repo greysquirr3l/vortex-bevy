@@ -1,0 +1,12 @@
+title = "Vortex-Bevy secret scan"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Allow only documented synthetic fixture labels."
+paths = [
+  '''fixtures/README\.md''',
+  '''fixtures/.+\.json''',
+  '''fixtures/.+\.ron''',
+]

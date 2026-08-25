@@ -1,0 +1,45 @@
+# Rust
+/target/
+**/*.rs.bk
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.kdbx
+
+# Local conversion outputs and logs
+/artifacts/
+/output/
+/staging/
+*.log
+
+# Unreal Engine generated files
+Binaries/
+Build/
+DerivedDataCache/
+Intermediate/
+Saved/
+.vs/
+*.sln
+*.suo
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.opendb
+
+# IDE and OS state
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Local fixture corpora and fuzz artifacts
+fixtures/local/
+fixtures/corpus/
+fuzz/artifacts/
+fuzz/corpus/
