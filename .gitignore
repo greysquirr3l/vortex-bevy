@@ -37,6 +37,7 @@ Saved/
 *.iml
 .DS_Store
 Thumbs.db
+.config/dotnet-tools.json
 
 # Local fixture corpora and fuzz artifacts
 fixtures/local/
@@ -51,3 +52,20 @@ fuzz/corpus/
 # Python bridge test cache
 __pycache__/
 *.py[cod]
+
+# Wiggum
+plan.toml
+IMPLEMENTATION_PLAN.md
+# AGENTS.md
+CLAUDE.md
+ORCHESTRATOR.md
+features.json
+
+# IDE
+.vscode/
+.claude/
+CLAUDE.md
+.github/hooks/rtk-rewrite.json
+.mcp.json
+.windsurfrules
+.cursorrules
