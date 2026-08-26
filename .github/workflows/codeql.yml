@@ -22,6 +22,6 @@ jobs:
         with:
           languages: rust
           build-mode: manual
-      - uses: dtolnay/rust-toolchain@1.97.1
+      - uses: dtolnay/rust-toolchain@1.100.0
       - run: cargo build --workspace --all-targets --all-features
       - uses: github/codeql-action/analyze@v3
