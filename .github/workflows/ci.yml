@@ -33,6 +33,22 @@ jobs:
       - name: Documentation
         run: cargo doc --workspace --no-deps
 
+  bridge-quality:
+    name: Authorized Editor bridge quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Install pinned bridge lint tools
+        run: python -m pip install ruff==0.14.3 gdtoolkit==4.2.2 pytest==8.3.5 jsonschema==4.23.0
+      - name: Validate authorized Editor bridges
+        run: bash scripts/check-bridge-quality.sh
+
   supply-chain:
     name: Supply chain and fixture policy
     runs-on: ubuntu-latest

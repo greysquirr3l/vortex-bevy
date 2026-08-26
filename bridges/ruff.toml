@@ -1,0 +1,16 @@
+target-version = "py39"
+line-length = 100
+
+[lint]
+select = ["ALL"]
+ignore = [
+  "COM812", # The formatter owns trailing-comma layout.
+  "D203",   # One blank line before class declarations is handled by D211.
+  "D213",   # Summary placement follows the D212 convention.
+]
+
+[lint.per-file-ignores]
+"bridges/tests/test_contract.py" = ["S101"]
+
+[lint.pydocstyle]
+convention = "google"

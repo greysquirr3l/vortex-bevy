@@ -27,6 +27,7 @@ cat > "${hooks_dir}/pre-push" <<'HOOK'
 set -euo pipefail
 cargo test --workspace --all-features
 cargo l
+bash scripts/check-bridge-quality.sh
 cargo build --workspace --release --all-targets --all-features
 cargo doc --workspace --no-deps
 HOOK

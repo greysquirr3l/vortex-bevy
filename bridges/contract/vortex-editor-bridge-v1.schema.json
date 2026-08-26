@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://greysquirr3l.github.io/vortex-bevy/contracts/vortex-editor-bridge-v1.schema.json",
+  "title": "Vortex Editor Bridge Report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["engine", "protocol_version", "records"],
+  "properties": {
+    "engine": {
+      "type": "string",
+      "enum": ["unreal", "unity", "godot"]
+    },
+    "protocol_version": {
+      "const": "vortex.editor-bridge/v1"
+    },
+    "records": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/record"}
+    }
+  },
+  "$defs": {
+    "record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "asset_kind",
+        "classification",
+        "errors",
+        "exporter",
+        "outputs",
+        "source_identity",
+        "warnings"
+      ],
+      "properties": {
+        "asset_kind": {"type": "string", "minLength": 1},
+        "classification": {
+          "type": "string",
+          "enum": ["converted", "baked", "requires_adapter", "unsupported", "rejected"]
+        },
+        "errors": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "exporter": {"type": "string", "minLength": 1},
+        "outputs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+"
+          }
+        },
+        "source_identity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["engine", "id"],
+          "properties": {
+            "engine": {"type": "string", "enum": ["unreal", "unity", "godot"]},
+            "id": {"type": "string", "minLength": 1}
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    }
+  }
+}

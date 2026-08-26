@@ -1,0 +1,30 @@
+{
+  "engine": "unreal",
+  "protocol_version": "vortex.editor-bridge/v1",
+  "records": [
+    {
+      "asset_kind": "StaticMesh",
+      "classification": "converted",
+      "errors": [],
+      "exporter": "StaticMesh",
+      "outputs": ["exports/Game_Meshes_SM_Crate_SM_Crate.fbx"],
+      "source_identity": {
+        "engine": "unreal",
+        "id": "/Game/Meshes/SM_Crate.SM_Crate"
+      },
+      "warnings": []
+    },
+    {
+      "asset_kind": "Blueprint",
+      "classification": "requires_adapter",
+      "errors": [],
+      "exporter": "none",
+      "outputs": [],
+      "source_identity": {
+        "engine": "unreal",
+        "id": "/Game/Blueprints/BP_Controller.BP_Controller"
+      },
+      "warnings": ["Unsupported authoritative export class: Blueprint"]
+    }
+  ]
+}

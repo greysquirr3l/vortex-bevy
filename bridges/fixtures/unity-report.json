@@ -1,0 +1,30 @@
+{
+  "engine": "unity",
+  "protocol_version": "vortex.editor-bridge/v1",
+  "records": [
+    {
+      "asset_kind": "GameObject",
+      "classification": "converted",
+      "errors": [],
+      "exporter": "unity.direct-source-stage",
+      "outputs": ["exports/0123456789abcdef0123456789abcdef.fbx"],
+      "source_identity": {
+        "engine": "unity",
+        "id": "0123456789abcdef0123456789abcdef"
+      },
+      "warnings": []
+    },
+    {
+      "asset_kind": "Material",
+      "classification": "requires_adapter",
+      "errors": [],
+      "exporter": "none",
+      "outputs": [],
+      "source_identity": {
+        "engine": "unity",
+        "id": "fedcba9876543210fedcba9876543210"
+      },
+      "warnings": ["No approved direct-source staging policy for '.mat'."]
+    }
+  ]
+}

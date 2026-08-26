@@ -43,3 +43,11 @@ fixtures/local/
 fixtures/corpus/
 fuzz/artifacts/
 fuzz/corpus/
+
+# Unity bridge static-analysis outputs
+/bridges/unity/bin/
+/bridges/unity/obj/
+
+# Python bridge test cache
+__pycache__/
+*.py[cod]

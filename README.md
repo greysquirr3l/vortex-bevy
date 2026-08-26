@@ -14,6 +14,7 @@ Cooked, encrypted, unowned, DRM-protected, or otherwise unauthorized inputs are 
 crates/
 ├── vortex-core/  # Pure domain, application use cases, and adapter boundaries.
 └── vortex-bevy/  # CLI and Bevy 0.19 runtime composition.
+bridges/          # Authorized Unreal, Unity, and Godot Editor export bridges.
 ```
 
 The core crate uses a collapsed DDD/Hex layout:
@@ -52,9 +53,14 @@ cargo fmt --all -- --check
 cargo l
 cargo deny --all-features check
 cargo audit
+bash scripts/check-bridge-quality.sh
 ```
 
 The Wiggum implementation plan is `plan.toml`. Generated task state is maintained in `PROGRESS.md`; do not edit generated task filenames by hand without regenerating the scaffold.
+
+## Authorized Editor bridges
+
+The repository provides isolated Unreal Python, Unity Editor C#, and Godot headless GDScript bridges in [`bridges/`](bridges/README.md). They only process caller-selected assets from authorized editable projects, confine all reports and staged files to a caller-provided root, and emit the versioned `vortex.editor-bridge/v1` contract. The bridge quality gate applies strict Python, C#, and GDScript formatting/linting plus deterministic contract tests without requiring any Editor in normal CI. Actual Editor execution remains opt-in and requires the matching authorized project and Editor version.
 
 ## Fixture policy
 

@@ -1,0 +1,30 @@
+{
+  "engine": "godot",
+  "protocol_version": "vortex.editor-bridge/v1",
+  "records": [
+    {
+      "asset_kind": "Mesh",
+      "classification": "converted",
+      "errors": [],
+      "exporter": "godot.direct-source-stage",
+      "outputs": ["exports/0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef.glb"],
+      "source_identity": {
+        "engine": "godot",
+        "id": "res://models/crate.glb"
+      },
+      "warnings": []
+    },
+    {
+      "asset_kind": "PackedScene",
+      "classification": "requires_adapter",
+      "errors": [],
+      "exporter": "none",
+      "outputs": [],
+      "source_identity": {
+        "engine": "godot",
+        "id": "res://scenes/level.tscn"
+      },
+      "warnings": ["No approved direct-source staging policy for '.tscn'."]
+    }
+  ]
+}
