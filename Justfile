@@ -10,7 +10,15 @@
 # and AGENTS.md preflight exactly. If you change a flag here, mirror it in
 # both places.
 
-set shell := ["bash", "-eu"]
+# Shell used to execute recipe bodies. The `-c` flag is mandatory — without it
+# bash interprets the recipe string as a script-file path and fails with
+# ENOENT on every multi-word command (cargo build, rustfmt, etc.).
+#
+# Wrapping with `env` makes the Justfile portable: `env bash` resolves `bash`
+# against $PATH at runtime, so this Mac's homebrew bash (/opt/homebrew/bin/bash)
+# is picked up first, Linux/CI runners fall through to /usr/bin/bash, and no
+# absolute path is hardcoded anywhere.
+set shell := ["env", "bash", "-eu", "-c"]
 
 # Toolchain pinned in rust-toolchain.toml — cargo picks it up automatically.
 toolchain       := "1.97.1"
