@@ -291,9 +291,9 @@ namespace Vortex.UnityBridge
 
         private sealed class BridgeRequest
         {
-            public IReadOnlyList<string> AssetGuids { get; private init; } = Array.Empty<string>();
-            public string ReportPath { get; private init; } = string.Empty;
-            public string StagingRoot { get; private init; } = string.Empty;
+            public IReadOnlyList<string> AssetGuids { get; private set; } = Array.Empty<string>();
+            public string ReportPath { get; private set; } = string.Empty;
+            public string StagingRoot { get; private set; } = string.Empty;
 
             public static BridgeRequest FromEnvironment()
             {

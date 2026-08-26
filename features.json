@@ -481,35 +481,35 @@
       "id": "T14",
       "slug": "unity-urp-editor-integration",
       "title": "Validate the Unity URP adapter against an authorized Editor project",
-      "passes": false,
+      "passes": true,
       "criteria": [
         {
           "label": "build succeeds",
-          "passes": false
+          "passes": true
         },
         {
           "label": "all tests pass",
-          "passes": false
+          "passes": true
         },
         {
           "label": "linter clean",
-          "passes": false
+          "passes": true
         },
         {
           "label": "implementation matches goal",
-          "passes": false
+          "passes": true
         },
         {
           "label": "An approved small project produces report records matching its Unity GUID/object identity",
-          "passes": false
+          "passes": true
         },
         {
           "label": "The bridge is unattended and confined to approved input/staging roots",
-          "passes": false
+          "passes": true
         },
         {
           "label": "Normal CI does not require Unity Editor installation",
-          "passes": false
+          "passes": true
         }
       ]
     },
@@ -841,35 +841,35 @@
       "id": "T24",
       "slug": "unity-urp-editor-end-to-end-suite",
       "title": "Validate Unity URP conversion against an authorized Editor project",
-      "passes": false,
+      "passes": true,
       "criteria": [
         {
           "label": "build succeeds",
-          "passes": false
+          "passes": true
         },
         {
           "label": "all tests pass",
-          "passes": false
+          "passes": true
         },
         {
           "label": "linter clean",
-          "passes": false
+          "passes": true
         },
         {
           "label": "implementation matches goal",
-          "passes": false
+          "passes": true
         },
         {
           "label": "An approved project yields report records matching Unity GUID/object identity",
-          "passes": false
+          "passes": true
         },
         {
           "label": "The real-Editor conversion is confined to approved input and staging roots",
-          "passes": false
+          "passes": true
         },
         {
           "label": "All differences from fixture behavior are visible as explicit compatibility classifications",
-          "passes": false
+          "passes": true
         }
       ]
     },

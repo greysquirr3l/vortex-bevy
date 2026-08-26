@@ -3,6 +3,7 @@ set -euo pipefail
 
 readonly bridge_root="bridges"
 readonly unity_bridge="${bridge_root}/unity/Editor/VortexUnityBridge.cs"
+readonly unity_static_scene_bridge="${bridge_root}/unity/Editor/VortexUnityStaticSceneBridge.cs"
 readonly unity_lint_project="${bridge_root}/unity/Vortex.UnityBridge.Lint.csproj"
 readonly unity_lint_stubs="${bridge_root}/unity/lint/UnityApiStubs.cs"
 readonly godot_bridge="${bridge_root}/godot/vortex_godot_bridge.gd"
@@ -36,6 +37,6 @@ pytest "${bridge_root}/tests"
 gdlint "${godot_bridge}"
 gdformat --check "${godot_bridge}"
 dotnet tool restore
-dotnet csharpier check "${unity_bridge}" "${unity_lint_stubs}"
+dotnet csharpier check "${unity_bridge}" "${unity_static_scene_bridge}" "${unity_lint_stubs}"
 dotnet build "${unity_lint_project}" --nologo --warnaserror
 reject_markers

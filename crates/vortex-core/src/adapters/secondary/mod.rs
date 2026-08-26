@@ -4,6 +4,7 @@ pub mod artifact_store;
 pub mod glb;
 pub mod texture;
 pub mod unity;
+pub mod unity_static_scene;
 pub mod unreal_bridge;
 pub mod unreal_package;
 pub mod urp_material;

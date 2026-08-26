@@ -14,13 +14,15 @@ use bevy::{
     asset::{AssetPlugin, AssetServer},
     camera::{
         CameraMainTextureUsages, Projection,
-        primitives::{Aabb, CubemapFrusta, Frustum},
+        primitives::{Aabb, CascadesFrusta, CubemapFrusta, Frustum},
         visibility::{
-            CubemapVisibleEntities, InheritedVisibility, ViewVisibility, VisibleEntities,
+            CascadesVisibleEntities, CubemapVisibleEntities, InheritedVisibility, ViewVisibility,
+            VisibleEntities,
         },
     },
     ecs::hierarchy::{ChildOf, Children},
     gltf::{GltfAssetLabel, GltfMaterialName, GltfMeshName, GltfSceneName},
+    light::cascade::{CascadeShadowConfig, Cascades},
     prelude::{
         App, Camera, Camera3d, DefaultPlugins, DirectionalLight, Entity, GlobalTransform, Mesh3d,
         MeshMaterial3d, Name, PluginGroup, PointLight, SpotLight, StandardMaterial, Transform,
@@ -86,6 +88,7 @@ pub fn build_runtime_app(asset_root: impl Into<String>) -> App {
     app.register_type::<ViewVisibility>();
     app.register_type::<VisibleEntities>();
     app.register_type::<CubemapVisibleEntities>();
+    app.register_type::<CascadesVisibleEntities>();
     app.register_type::<ChildOf>();
     app.register_type::<Children>();
     app.register_type::<Name>();
@@ -103,6 +106,9 @@ pub fn build_runtime_app(asset_root: impl Into<String>) -> App {
     app.register_type::<Camera3d>();
     app.register_type::<PointLight>();
     app.register_type::<DirectionalLight>();
+    app.register_type::<Cascades>();
+    app.register_type::<CascadesFrusta>();
+    app.register_type::<CascadeShadowConfig>();
     app.register_type::<SpotLight>();
     app.add_plugins(EguiPlugin::default());
     app.add_plugins(VortexDesktopViewerPlugin);

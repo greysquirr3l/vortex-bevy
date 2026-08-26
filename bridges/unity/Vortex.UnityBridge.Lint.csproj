@@ -11,6 +11,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Editor/VortexUnityBridge.cs" Link="Editor/VortexUnityBridge.cs" />
+    <Compile Include="Editor/VortexUnityStaticSceneBridge.cs" Link="Editor/VortexUnityStaticSceneBridge.cs" />
     <Compile Include="lint/UnityApiStubs.cs" />
   </ItemGroup>
 </Project>
