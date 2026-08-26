@@ -6,6 +6,7 @@
 pub mod conversion;
 pub mod identity;
 pub mod manifest;
+pub mod scene_ir;
 
 pub use conversion::{
     ArtifactKind, ArtifactRecord, ClassificationKind, ConversionAggregate,
@@ -14,10 +15,11 @@ pub use conversion::{
 };
 pub use identity::{
     ArtifactHash, ConversionId, ExportProfileName, OutputRoot, ProjectRoot, SourceAssetPath,
-    SourceIdentity, StageSelection, UnrealObjectPath, UsdPrimPath,
+    SourceIdentity, StageSelection, UnityAssetGuid, UnityObjectId, UnrealObjectPath, UsdPrimPath,
 };
 pub use manifest::{
     CompatibilityCapability, CompatibilityRequirements, DEFAULT_MANIFEST_LIMIT_BYTES,
     ManifestArtifact, ManifestArtifactKind, ManifestError, ManifestSource, SceneManifest,
     SchemaVersion,
 };
+pub use scene_ir::{CanonicalScene, CoordinateNormalization, SceneIrError};

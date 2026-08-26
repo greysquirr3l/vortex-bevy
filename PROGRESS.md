@@ -46,14 +46,14 @@
 
 | Task | Status | Notes |
 |---|---|---|
-| T07 — Build a typed CLI for inspect, plan, convert, verify, and view | `[x]` | Typed CLI commands, structured reports, and pre-dispatch malformed-input rejection are validated. |
-| T08 — Implement Rust-first Unreal package inspection and preflight | `[x]` | Metadata-only bounded inspection is implemented; payload decoding remains deliberately excluded. |
-| T09 — T09a — Implement Unreal Editor bridge protocol and synthetic tests | `[x]` | Versioned bridge protocol and synthetic report/staging tests are implemented without an Editor installation. |
-| T10 — T09b — Validate authorized Unreal Editor export integration | `[ ]` | |
-| T11 — Resolve selected OpenUSD stage configurations into typed source data | `[x]` | Bounded USDA stage facts and canonical convergence are implemented; advanced composition remains bridge-gated. |
-| T12 — Build the canonical scene intermediate representation | `[x]` | Typed deterministic IR validates graph, transforms, render payloads, deformation, provenance, and source convergence. |
-| T13 — Ingest authorized Unity URP project source into typed canonical records | `[x]` | Bounded text-only Unity project records and constrained URP source facts are implemented and tested. |
-| T14 — Validate the Unity URP adapter against an authorized Editor project | `[ ]` | |
+| T07 — Build a typed CLI for inspect, plan, convert, verify, and view | `[x]` | Typed Clap command boundary, text/JSON reports, malformed-input rejection before dispatch, and support-matrix reporting are validated. |
+| T08 — Implement Rust-first Unreal package inspection and preflight | `[x]` | Bounded `uasset` 0.6 metadata preflight, root confinement, cooked-sidecar rejection, companion checks, typed facts, and malformed-byte coverage are validated. |
+| T09 — T09a — Implement Unreal Editor bridge protocol and synthetic tests | `[x]` | Fixed checked-in bridge command construction, report/version validation, staging confinement, deterministic mapping, and simulated subprocess coverage are validated without an Editor. |
+| T10 — T09b — Validate authorized Unreal Editor export integration | `[!]` | Human-gated: requires an authorized redistributable Unreal source project and exact matching Editor version. |
+| T11 — Resolve selected OpenUSD stage configurations into typed source data | `[x]` | Root-confined bounded USDA selection, deterministic prim/metadata facts, and explicit binary/full-composition limits are validated. |
+| T12 — Build the canonical scene intermediate representation | `[x]` | Bevy-free deterministic canonical scene IR, typed graph references, normalization provenance, and fail-closed validation are implemented and tested. |
+| T13 — Ingest authorized Unity URP project source into typed canonical records | `[x]` | Bounded Force Text project inspection, GUID/meta provenance, URP source facts, and explicit unsupported/Editor-required outcomes are validated. |
+| T14 — Validate the Unity URP adapter against an authorized Editor project | `[!]` | Human-gated: requires an authorized redistributable Unity project, matching Unity Editor, and exact URP package version. |
 
 ---
 
@@ -65,11 +65,11 @@
 
 | Task | Status | Notes |
 |---|---|---|
-| T15 — Emit deterministic Bevy-compatible GLB mesh and scene assets | `[x]` | Deterministic GLB mesh, hierarchy, image, material, skin, clip, and morph emission is structurally validated. |
-| T16 — Normalize textures and map constrained PBR materials | `[x]` | Bounded PNG staging, linear ORM packing, color-space validation, and embedded GLB texture binding are implemented. |
-| T17 — Map constrained Unity URP Lit and Unlit materials to Bevy PBR artifacts | `[x]` | Approved Lit/Unlit slots, UV metadata, and typed canonical texture binding are implemented; unsupported semantics remain explicit. |
-| T18 — Add validated skins, conventional clips, and morph targets | `[x]` | Validated skin palettes, inverse binds, conventional clips, morph deltas, and deterministic GLB payloads are implemented. |
-| T19 — Atomically publish artifacts, reports, and replay-safe conversion state | `[x]` | Atomic owned-path publication, replay reuse, mismatch rejection, contention handling, and cleanup are implemented. |
+| T15 — Emit deterministic Bevy-compatible GLB mesh and scene assets | `[x]` | Contained deterministic GLB serializer validates canonical IR, alignment, structural glTF parsing, mesh/node/camera/light labels, and byte stability. |
+| T16 — Normalize textures and map constrained PBR materials | `[x]` | Bounded content-addressed PNG staging, color-space/sampler preservation, deduplication, and deterministic PBR texture emission are validated. |
+| T17 — Map constrained Unity URP Lit and Unlit materials to Bevy PBR artifacts | `[x]` | Unity-owned bounded Lit/Unlit mapping validates shader/property gates, factors, alpha/UV semantics, texture roles, and explicit unsupported cases. |
+| T18 — Add validated skins, conventional clips, and morph targets | `[x]` | Canonical deformation validation and deterministic GLB skin, animation, morph, and vertex-influence emission are parser-tested. |
+| T19 — Atomically publish artifacts, reports, and replay-safe conversion state | `[x]` | Root-confined staging, fsync/rename publication, locks, hash verification, replay, reports, and idempotent cleanup are validated. |
 
 ---
 
@@ -81,11 +81,11 @@
 
 | Task | Status | Notes |
 |---|---|---|
-| T20 — Load Vortex artifacts into Bevy 0.19 with provenance components | `[x]` | Bounded manifest/GLB validation, `WorldAssetRoot` spawning, child-node instantiation, provenance components, and fail-closed rejection are validated headlessly. |
+| T20 — Load Vortex artifacts into Bevy 0.19 with provenance components | `[x]` | Bounded manifest/GLB validation, complete atomic-publication verification, reflected current glTF world components, `WorldAssetRoot` spawning, provenance components, and diagnostic fallback are validated headlessly. |
 | T21 — Ship the Bevy viewer with scene, source, and diagnostic inspection | `[x]` | Data-driven lifecycle/provenance inspection, filtering, reload/unload, and `bevy_egui` panels are complete with one native camera: right-drag orbit, middle-drag pan, bounded wheel zoom, selected-root framing, pointer gating, scale-aware viewport clipping, and camera disablement when panels exhaust the viewport. Headless validation is complete; visual desktop smoke testing remains a release-platform activity. |
-| T22 — Prove the complete conversion pipeline with golden end-to-end suites | `[ ]` | |
-| T23 — Prove Unity URP fixture conversion end to end | `[ ]` | |
-| T24 — Validate Unity URP conversion against an authorized Editor project | `[ ]` | |
+| T22 — Prove the complete conversion pipeline with golden end-to-end suites | `[~]` | Mandatory owned USDA → canonical IR → deterministic GLB → atomic publication/verification → headless Bevy suite and compatibility matrix are complete. Authorized real-Unreal-Editor smoke validation remains human-gated. |
+| T23 — Prove Unity URP fixture conversion end to end | `[x]` | Owned Force Text Lit/Unlit fixture inspection, canonical provenance, deterministic GLB/manifest publication and replay, headless Bevy material loading, and malformed/Shader Graph/tamper failure paths are validated without Unity Editor. |
+| T24 — Validate Unity URP conversion against an authorized Editor project | `[!]` | Human-gated: requires an authorized redistributable Unity project, matching Unity Editor, and exact URP package version. |
 
 ---
 
@@ -136,4 +136,4 @@
 > Describe what now exists, what is wired up, and what key decisions were made.
 > A fresh agent should be able to orient from this section alone.
 
-`vortex-core` contains a pure deterministic conversion domain, consumer-owned application contracts, bounded source adapters, canonical scene IR, deterministic GLB/image/deformation packaging, constrained URP mapping, and atomic publication. `vortex-bevy` contains typed CLI boundaries and a Bevy 0.19 runtime that validates a bounded manifest and GLB checksum before spawning `WorldAssetRoot`; it retains Vortex provenance components and is verified headlessly through real Bevy asset loading and child-node instantiation. T21 adds root lifecycle generations, controlled unload/reload, detached inspection snapshots, and a Bevy 0.19-compatible `bevy_egui` panel shell with typed reload/unload commands, classification filtering, provenance details, variants, GLB labels, and diagnostics. Its native desktop viewer now has a single orbit camera, selected-root framing, pointer-ownership gating, scale-aware panel clipping, and safe camera disablement when panels consume the viewport. T10 and T14 remain human-gated authorized Editor integrations; T22–T24 and advanced Phase 6 work remain open.
+**Recovery state (2026-08-26):** the previously absent T07–T19 implementations have been rebuilt and validated. `vortex-core` now contains bounded Unreal metadata and Editor-bridge adapters, USDA selection facts, canonical scene IR, Unity Force Text/URP source facts and mapping, deterministic GLB/texture/deformation packaging, and a root-confined atomic artifact store. `vortex-bevy` has typed CLI/report boundaries plus a Bevy 0.19 runtime that verifies complete published conversions before loading, registers the reflected dynamic-glTF components required by current Bevy world spawning, and preserves provenance and diagnostics. T21’s native `bevy_egui` viewer remains complete. T22’s mandatory self-authored synthetic USDA → canonical IR → GLB → publication → headless runtime path and compatibility matrix are complete, while its real Editor smoke test remains gated. T23 now proves the owned Force Text URP Lit/Unlit fixture path through deterministic replay, atomic artifacts, and headless Bevy material loading. T10, T14, and T24 require authorized matching Editor projects.

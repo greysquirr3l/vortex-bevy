@@ -7,6 +7,7 @@
 
 use bevy::prelude::{App, MinimalPlugins};
 
+pub mod cli;
 pub mod runtime;
 
 /// Builds the minimal Bevy application used by command-oriented workflows.

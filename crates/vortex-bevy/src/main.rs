@@ -2,6 +2,8 @@
 
 #![forbid(unsafe_code)]
 
-fn main() {
-    let _app = vortex_bevy::build_app();
+use std::process::ExitCode;
+
+fn main() -> ExitCode {
+    vortex_bevy::cli::run_from_environment()
 }

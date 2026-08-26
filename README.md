@@ -38,6 +38,28 @@ Command/query handlers own only the narrow dependency trait they consume: inspec
 
 The Bevy 0.19 runtime verifies the manifest and GLB checksum before spawning `WorldAssetRoot`, then retains source provenance, classifications, diagnostics, variants, and artifact hash on the root entity. See [`docs/bevy_runtime_loading_contract.md`](docs/bevy_runtime_loading_contract.md). Runtime roots have explicit inspection, unload, and reload operations that preserve a data-driven viewer boundary; see [`docs/runtime_scene_lifecycle_contract.md`](docs/runtime_scene_lifecycle_contract.md). The local `bevy_egui` inspector queues lifecycle actions and shares a clipped native 3D viewport: right drag orbits, middle drag pans, the wheel zooms, and **F** or **Frame** fits the selected verified root. Pointer-owned UI input is gated, and the camera disables if panels leave no usable viewport. See [`docs/bevy_egui_viewer_contract.md`](docs/bevy_egui_viewer_contract.md).
 
+## Typed CLI and Unreal metadata preflight
+
+The recovery CLI uses typed Clap parsers for `inspect`, `plan`, `convert`, `verify`, `view`, `support-matrix`, and `version`. It supports deterministic text and JSON reports. The concrete first adapter is `inspect --engine unreal`: it confines one explicit `.uasset` to an authorized physical project root, enforces a bounded package size, rejects cooked-style sidecars and path/symlink escapes, then extracts only header metadata through pinned `uasset` 0.6.0. A successful inspection remains `requires_adapter`; semantic export must use the matching authorized Unreal Editor bridge. See [`docs/unreal_metadata_preflight_contract.md`](docs/unreal_metadata_preflight_contract.md).
+
+The matching-Editor hand-off is now also represented by a typed Rust adapter: it builds only the checked-in Unreal bridge command, confines project/staging/report paths, validates the versioned report, and maps every explicit record to a typed source identity without requiring Unreal in synthetic tests. See [`docs/unreal_editor_bridge_protocol.md`](docs/unreal_editor_bridge_protocol.md). Real matching-Editor execution remains human-gated under T10.
+
+The initial USD adapter now resolves selected, root-confined **USDA** stage facts deterministically: selection, variants, payload policy, purpose, time range, render context, root units/up-axis, hierarchy, transforms, visibility, instancing, and unresolved composition arcs. Binary/plugin-backed layers remain explicit authoritative-runtime requirements; this adapter does not claim full OpenUSD composition. See [`docs/usd_stage_ingestion_contract.md`](docs/usd_stage_ingestion_contract.md).
+
+Source adapters now feed a Bevy-free engine-neutral canonical scene IR with typed cross-object IDs, deterministic sorting, explicit coordinate/units provenance, and one fail-closed graph-validation boundary. See [`docs/canonical_scene_ir_contract.md`](docs/canonical_scene_ir_contract.md).
+
+The bounded Unity URP adapter inspects selected Force Text source-project records with visible `.meta` GUIDs, root-constrained paths, Unity/URP provenance, stable typed source identities, and explicit unsupported/adapter-needed cases. It accepts only the documented static scene/prefab/material subset and does not replace matching-Editor import resolution. See [`docs/unity_urp_source_ingestion_contract.md`](docs/unity_urp_source_ingestion_contract.md).
+
+The recovered deterministic GLB package boundary emits validated indexed geometry, PBR texture/image/sampler records, baseline Unity URP Lit/Unlit material mappings, skins, conventional animation clips, and position morph targets. It rejects unknown texture/material slots and malformed deformation facts rather than producing partial artifacts. See [`docs/glb_texture_material_deformation_contract.md`](docs/glb_texture_material_deformation_contract.md).
+
+The atomic artifact store now stages complete payloads under the typed output root, fsyncs practical boundaries, verifies manifest hashes, acquires a single-writer conversion lock, and renames only complete directories into place. Replay verifies and reuses an equivalent final conversion; verify, report retrieval, and cleanup remain fail-closed and root-confined. See [`docs/artifact_publication_contract.md`](docs/artifact_publication_contract.md).
+
+The mandatory synthetic T22 suite resolves owned USDA facts, validates a canonical scene, packages byte-stable GLB output, atomically publishes and verifies it, then loads it through headless Bevy. Its generated [`docs/compatibility_matrix.json`](docs/compatibility_matrix.json) is the JSON form of the same typed support matrix exposed by the CLI. A real authorized Unreal Editor smoke test remains explicitly human-gated. See [`docs/synthetic_end_to_end_contract.md`](docs/synthetic_end_to_end_contract.md).
+
+The T23 owned Unity URP fixture suite verifies Force Text source inspection, Lit/Unlit material mapping, canonical source links, deterministic GLB and manifest publication, and headless Bevy material spawning. It deliberately excludes real Unity import resolution and Shader Graph; those remain Editor-gated or unsupported. See [`docs/unity_urp_fixture_end_to_end_contract.md`](docs/unity_urp_fixture_end_to_end_contract.md).
+
+The remaining conversion commands are deliberately explicit about their recovery status: they parse and validate typed inputs but report unavailable downstream capability until canonical IR, packaging, publication, and artifact discovery are rebuilt. They do not pretend to convert an asset.
+
 ## Prerequisites
 
 - Rust **1.97.1**, automatically selected by `rust-toolchain.toml`.

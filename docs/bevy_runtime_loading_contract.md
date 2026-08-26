@@ -8,7 +8,7 @@ The `vortex-bevy` runtime accepts a `scene.manifest.ron` sidecar and a declared 
 
 The runtime applies the core manifest schema and size limit, requires a Bevy `0.19` compatibility declaration, rejects runtime requests that still require Unreal Editor export, and verifies the declared GLB SHA-256 checksum. The manifest artifact path is checked again after canonicalization to prevent traversal outside the manifest directory.
 
-A failed request does not spawn `WorldAssetRoot`. Callers can instead spawn `VortexRuntimeDiagnostic` with a stable code and visible message.
+A failed request does not spawn `WorldAssetRoot`. `load_published_conversion_and_spawn` first invokes the atomic artifact store’s full manifest-artifact verification for one root-confined conversion ID, then passes its resolved manifest to Bevy. `load_published_conversion_or_diagnostic` converts any such rejection into `VortexRuntimeDiagnostic` with the stable `vortex.runtime.artifact_rejected` code instead of spawning a misleading scene.
 
 ## Runtime Provenance
 
@@ -27,4 +27,4 @@ The runtime registers the standard reflected Bevy components emitted by dynamic 
 
 ## Test Contract
 
-The headless runtime integration suite creates a self-authored minimal GLB fixture and verifies that Bevy resolves it, instantiates its named child node, and retains all root provenance components. Separate tests reject checksum mismatch, unsupported capability, absent manifest, and malformed manifest inputs without spawning a Vortex scene root.
+The headless runtime integration suite creates both a self-authored direct manifest fixture and an atomically published conversion fixture. It verifies that Bevy resolves the scene, instantiates its named child node, and retains all root provenance components. Separate tests reject checksum mismatch, unsupported capability, absent manifest, malformed manifest, and corruption after atomic publication. The published-path failure produces a `VortexRuntimeDiagnostic` rather than a second scene root.

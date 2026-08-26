@@ -14,15 +14,22 @@ use bevy::{
 };
 use vortex_bevy::runtime::{
     ViewerCommand, ViewerCommandQueue, VortexArtifactHash, VortexConversionStatus,
-    VortexDiagnosticSet, VortexSceneLifecycle, VortexSceneRoot, VortexSourceLink,
-    VortexVariantSelection, VortexViewerState, build_runtime_app, inspect_scene,
-    load_manifest_and_spawn, reload_scene, unload_scene, verify_manifest,
+    VortexDiagnosticSet, VortexRuntimeDiagnostic, VortexSceneLifecycle, VortexSceneRoot,
+    VortexSourceLink, VortexVariantSelection, VortexViewerState, build_runtime_app, inspect_scene,
+    load_manifest_and_spawn, load_published_conversion_and_spawn,
+    load_published_conversion_or_diagnostic, reload_scene, unload_scene, verify_manifest,
 };
-use vortex_core::domain::{
-    ArtifactHash, ClassificationKind, CompatibilityCapability, CompatibilityRequirements,
-    ConversionClassification, Diagnostic, DiagnosticCode, ManifestArtifact, ManifestArtifactKind,
-    ManifestSource, ProjectRoot, Remediation, SceneManifest, SourceAssetPath, SourceIdentity,
-    UnrealObjectPath,
+use vortex_core::{
+    adapters::secondary::artifact_store::{
+        ArtifactPayload, AtomicArtifactStore, PublicationRequest,
+    },
+    domain::{
+        ArtifactHash, ArtifactKind, ArtifactRecord, ClassificationKind, CompatibilityCapability,
+        CompatibilityRequirements, ConversionAggregate, ConversionClassification,
+        ConversionContext, ConversionId, Diagnostic, DiagnosticCode, ManifestArtifact,
+        ManifestArtifactKind, ManifestSource, OutputRoot, ProjectRoot, Remediation, SceneManifest,
+        SourceAssetPath, SourceIdentity, UnrealObjectPath,
+    },
 };
 
 fn source_identity() -> Result<SourceIdentity, Box<dyn Error>> {
@@ -100,6 +107,62 @@ fn write_manifest_fixture(
     Ok(manifest_path)
 }
 
+fn publish_runtime_fixture(
+    root: &Path,
+) -> Result<(AtomicArtifactStore, ConversionId), Box<dyn Error>> {
+    let glb = minimal_glb()?;
+    let source = source_identity()?;
+    let profile_hash = ArtifactHash::from_bytes(b"t20-published-profile");
+    let classification = ConversionClassification::new(
+        ClassificationKind::Converted,
+        "published fixture is supported by the runtime subset",
+        Remediation::new("Use the published runtime fixture profile.")?,
+    )?;
+    let payload = ArtifactPayload::new("scene.glb", glb)?;
+    let manifest = SceneManifest::new(
+        "0.1.0",
+        profile_hash.clone(),
+        vec![ManifestArtifact {
+            kind: ManifestArtifactKind::Glb,
+            path: payload.relative_path.clone(),
+            hash: payload.hash(),
+        }],
+        vec![ManifestSource {
+            identity: source.clone(),
+            asset_kind: "static_mesh".to_owned(),
+            selected_values: BTreeMap::new(),
+            glb_labels: BTreeMap::new(),
+            classification: classification.clone(),
+            diagnostics: Vec::new(),
+        }],
+        CompatibilityRequirements {
+            minimum_bevy_version: "0.19".to_owned(),
+            required_capabilities: BTreeSet::from([CompatibilityCapability::BevyGltfPbr]),
+        },
+    )?;
+    let context = ConversionContext::new("default".parse()?, profile_hash, "0.1.0")?;
+    let mut conversion = ConversionAggregate::begin(source, context);
+    conversion.record_artifact(ArtifactRecord::new(
+        ArtifactKind::Glb,
+        payload.hash(),
+        "scene.glb",
+    )?)?;
+    conversion.record_artifact(ArtifactRecord::new(
+        ArtifactKind::Manifest,
+        ArtifactHash::from_bytes(b"published-manifest-record"),
+        "scene.manifest.ron",
+    )?)?;
+    conversion.classify(classification)?;
+    let conversion = conversion.finalize()?;
+    let id = conversion.id().clone();
+    let store = AtomicArtifactStore::new(root, "published".parse::<OutputRoot>()?)?;
+    assert_eq!(
+        store.publish(&PublicationRequest { conversion, manifest, payloads: vec![payload] })?,
+        vortex_core::adapters::secondary::artifact_store::PublicationOutcome::Published
+    );
+    Ok((store, id))
+}
+
 fn tick_until_world_asset_loaded(app: &mut App, entity: Entity) -> Result<(), String> {
     for _ in 0..80 {
         app.update();
@@ -161,6 +224,25 @@ fn verified_manifest_spawns_world_asset_root_with_provenance_components()
     let mut names = world.query::<&Name>();
     assert!(names.iter(world).any(|name| name.as_str() == "RuntimeTriangle"));
 
+    Ok(())
+}
+
+#[test]
+fn atomically_published_conversion_verifies_before_spawn_and_corruption_becomes_diagnostic()
+-> Result<(), Box<dyn Error>> {
+    let root = fixture_root("t20-runtime-published");
+    reset_root(&root)?;
+    let (store, id) = publish_runtime_fixture(&root)?;
+    let asset_root = root.join(id.as_str());
+    let mut app = build_runtime_app(asset_root.to_string_lossy().into_owned());
+    let entity = load_published_conversion_and_spawn(&mut app, &store, &id)?;
+    if let Err(error) = tick_until_world_asset_loaded(&mut app, entity) {
+        return Err(Box::<dyn Error>::from(error));
+    }
+    fs::write(asset_root.join("scene.glb"), b"corrupt published artifact")?;
+    let diagnostic = load_published_conversion_or_diagnostic(&mut app, &store, &id);
+    assert!(app.world().entity(diagnostic).contains::<VortexRuntimeDiagnostic>());
+    fs::remove_dir_all(root)?;
     Ok(())
 }
 

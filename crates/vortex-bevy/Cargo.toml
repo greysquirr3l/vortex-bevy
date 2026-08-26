@@ -14,6 +14,9 @@ repository.workspace = true
 anyhow.workspace = true
 bevy = { workspace = true, features = ["bevy_asset", "bevy_scene", "bevy_gltf", "bevy_pbr"] }
 bevy_egui.workspace = true
+clap.workspace = true
+serde.workspace = true
+serde_json.workspace = true
 vortex-core = { path = "../vortex-core", version = "0.1.0" }
 
 [lints]

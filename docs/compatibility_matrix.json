@@ -1,0 +1,55 @@
+{
+  "kind": "support_matrix",
+  "entries": [
+    {
+      "capability": "unreal.uasset.metadata_preflight",
+      "classification": "requires_adapter",
+      "remediation": "Use the matching authorized Unreal Editor bridge for semantic export."
+    },
+    {
+      "capability": "unreal.editor_bridge.protocol",
+      "classification": "requires_adapter",
+      "remediation": "Run the checked-in bridge only with an authorized matching Unreal Editor project."
+    },
+    {
+      "capability": "unreal.cooked_or_encrypted_content",
+      "classification": "rejected",
+      "remediation": "Use authorized editable project source; Vortex does not bypass access controls."
+    },
+    {
+      "capability": "usd.usda.selected_stage",
+      "classification": "requires_adapter",
+      "remediation": "Use the bounded USDA adapter for selected facts; use an OpenUSD runtime for full composition."
+    },
+    {
+      "capability": "unity.urp_text_project",
+      "classification": "requires_adapter",
+      "remediation": "Use Force Text source inspection for the supported subset or a matching Unity Editor for import resolution."
+    },
+    {
+      "capability": "glb.deterministic_packaging",
+      "classification": "converted",
+      "remediation": "Use the validated canonical scene IR and deterministic GLB package boundary."
+    },
+    {
+      "capability": "artifact.atomic_publication",
+      "classification": "converted",
+      "remediation": "Publish through the root-confined atomic artifact store and verify before loading."
+    },
+    {
+      "capability": "bevy.0_19_verified_runtime",
+      "classification": "converted",
+      "remediation": "Load only verified published manifests through the Bevy 0.19 runtime adapter."
+    },
+    {
+      "capability": "e2e.synthetic_usda_fixture",
+      "classification": "converted",
+      "remediation": "Use the self-authored synthetic fixture suite; real Editor validation remains opt-in."
+    },
+    {
+      "capability": "e2e.synthetic_unity_urp_fixture",
+      "classification": "converted",
+      "remediation": "Use the owned Force Text Lit/Unlit fixture suite; matching-Editor validation remains required for real projects."
+    }
+  ]
+}

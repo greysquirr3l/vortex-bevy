@@ -9,21 +9,31 @@ mod viewer;
 
 use std::{collections::BTreeMap, path::Path};
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use bevy::{
     asset::{AssetPlugin, AssetServer},
-    camera::visibility::{InheritedVisibility, ViewVisibility},
+    camera::{
+        CameraMainTextureUsages, Projection,
+        primitives::{Aabb, CubemapFrusta, Frustum},
+        visibility::{
+            CubemapVisibleEntities, InheritedVisibility, ViewVisibility, VisibleEntities,
+        },
+    },
     ecs::hierarchy::{ChildOf, Children},
-    gltf::GltfAssetLabel,
+    gltf::{GltfAssetLabel, GltfMaterialName, GltfMeshName, GltfSceneName},
     prelude::{
-        App, DefaultPlugins, Entity, GlobalTransform, Name, PluginGroup, Transform, Visibility,
-        World, WorldAssetRoot,
+        App, Camera, Camera3d, DefaultPlugins, DirectionalLight, Entity, GlobalTransform, Mesh3d,
+        MeshMaterial3d, Name, PluginGroup, PointLight, SpotLight, StandardMaterial, Transform,
+        Visibility, World, WorldAssetRoot,
     },
     transform::components::TransformTreeChanged,
     window::{Window, WindowPlugin, WindowResolution},
 };
 use bevy_egui::EguiPlugin;
-use vortex_core::domain::ManifestSource;
+use vortex_core::{
+    adapters::secondary::artifact_store::AtomicArtifactStore,
+    domain::{ConversionId, ManifestSource},
+};
 
 pub use components::{
     VortexArtifactHash, VortexConversionStatus, VortexDiagnosticSet, VortexRuntimeDiagnostic,
@@ -74,15 +84,70 @@ pub fn build_runtime_app(asset_root: impl Into<String>) -> App {
     app.register_type::<Visibility>();
     app.register_type::<InheritedVisibility>();
     app.register_type::<ViewVisibility>();
+    app.register_type::<VisibleEntities>();
+    app.register_type::<CubemapVisibleEntities>();
     app.register_type::<ChildOf>();
     app.register_type::<Children>();
     app.register_type::<Name>();
+    app.register_type::<Mesh3d>();
+    app.register_type::<Aabb>();
+    app.register_type::<Frustum>();
+    app.register_type::<CubemapFrusta>();
+    app.register_type::<GltfMeshName>();
+    app.register_type::<GltfMaterialName>();
+    app.register_type::<GltfSceneName>();
+    app.register_type::<MeshMaterial3d<StandardMaterial>>();
+    app.register_type::<Camera>();
+    app.register_type::<CameraMainTextureUsages>();
+    app.register_type::<Projection>();
+    app.register_type::<Camera3d>();
+    app.register_type::<PointLight>();
+    app.register_type::<DirectionalLight>();
+    app.register_type::<SpotLight>();
     app.add_plugins(EguiPlugin::default());
     app.add_plugins(VortexDesktopViewerPlugin);
     app.add_plugins(VortexViewerPlugin);
     app.finish();
     app.cleanup();
     app
+}
+
+/// Loads a complete atomically published conversion only after its manifest and every declared
+/// artifact have verified beneath the configured output root.
+///
+/// # Errors
+///
+/// Returns an error when the published conversion is absent, any declared artifact hash differs,
+/// or the Bevy manifest loader rejects the scene.
+pub fn load_published_conversion_and_spawn(
+    app: &mut App,
+    store: &AtomicArtifactStore,
+    conversion_id: &ConversionId,
+) -> Result<Entity> {
+    store
+        .verify_published(conversion_id)
+        .with_context(|| format!("published conversion {conversion_id} did not verify"))?;
+    let manifest_path = store
+        .published_manifest_path(conversion_id)
+        .with_context(|| format!("cannot resolve published manifest for {conversion_id}"))?;
+    load_manifest_and_spawn(app, &manifest_path)
+}
+
+/// Loads a published conversion or spawns a visible diagnostic instead of a misleading scene.
+#[must_use]
+pub fn load_published_conversion_or_diagnostic(
+    app: &mut App,
+    store: &AtomicArtifactStore,
+    conversion_id: &ConversionId,
+) -> Entity {
+    match load_published_conversion_and_spawn(app, store, conversion_id) {
+        Ok(entity) => entity,
+        Err(error) => spawn_runtime_diagnostic(
+            app,
+            "vortex.runtime.artifact_rejected",
+            format!("published conversion {conversion_id} rejected: {error:#}"),
+        ),
+    }
 }
 
 /// Validates a Vortex manifest and spawns a Bevy world asset root with provenance components.

@@ -805,35 +805,35 @@
       "id": "T23",
       "slug": "unity-urp-fixture-end-to-end-suite",
       "title": "Prove Unity URP fixture conversion end to end",
-      "passes": false,
+      "passes": true,
       "criteria": [
         {
           "label": "build succeeds",
-          "passes": false
+          "passes": true
         },
         {
           "label": "all tests pass",
-          "passes": false
+          "passes": true
         },
         {
           "label": "linter clean",
-          "passes": false
+          "passes": true
         },
         {
           "label": "implementation matches goal",
-          "passes": false
+          "passes": true
         },
         {
           "label": "Repeated owned-fixture conversion produces byte-stable artifacts and provenance",
-          "passes": false
+          "passes": true
         },
         {
           "label": "Bevy integration confirms expected scene and material resources load",
-          "passes": false
+          "passes": true
         },
         {
           "label": "Fixture failures yield specific typed classifications and diagnostic codes",
-          "passes": false
+          "passes": true
         }
       ]
     },
