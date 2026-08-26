@@ -18,10 +18,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: github/codeql-action/init@v3
+      - uses: github/codeql-action/init@v4
         with:
           languages: rust
           build-mode: manual
       - uses: dtolnay/rust-toolchain@1.97.1
       - run: cargo build --workspace --all-targets --all-features
-      - uses: github/codeql-action/analyze@v3
+      - uses: github/codeql-action/analyze@v4
