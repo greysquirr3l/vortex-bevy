@@ -51,3 +51,19 @@ fuzz/corpus/
 # Python bridge test cache
 __pycache__/
 *.py[cod]
+
+# Historical planning artifacts removed by the cleanup policy.
+# `plan.toml`, `features.json`, `PROGRESS.md`, and `tasks/*.md` are tracked
+# Vortex project contracts and intentionally must not be ignored.
+IMPLEMENTATION_PLAN.md
+CLAUDE.md
+ORCHESTRATOR.md
+
+# IDE
+.vscode/
+.claude/
+CLAUDE.md
+.github/hooks/rtk-rewrite.json
+.mcp.json
+.windsurfrules
+.cursorrules

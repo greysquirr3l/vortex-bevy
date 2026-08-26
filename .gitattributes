@@ -1,0 +1,11 @@
+# These artifacts are generated or pinned project contracts.  During a merge,
+# preserve the current branch's reviewed copy rather than silently accepting an
+# upstream deletion or an unreviewed replacement.  The local driver is installed
+# by scripts/install-hooks.sh as merge.vortex-preserve.driver=true.
+/plan.toml merge=vortex-preserve
+/features.json merge=vortex-preserve
+/PROGRESS.md merge=vortex-preserve
+/tasks/** merge=vortex-preserve
+/.config/dotnet-tools.json merge=vortex-preserve
+/bridges/** merge=vortex-preserve
+/docs/compatibility_matrix.json merge=vortex-preserve
