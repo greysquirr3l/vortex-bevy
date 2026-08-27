@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "source": "shaderball.usda",
+  "ownership": "third-party CC BY 4.0; retained under explicit user authorization",
+  "source_format": "OpenUSD USDA 1.0",
+  "purpose": [
+    "production-shaped selected-stage inspection",
+    "large textual USD parsing",
+    "variant and shader-network composition facts",
+    "bounded requires-adapter classification",
+    "RSS and allocator observation"
+  ],
+  "expected_classification": "requires_adapter",
+  "expected_diagnostic": "usd.composition.requires_adapter",
+  "sha256": "fafad41722900d71dd562fa49c226cf05c9650a8c1bc2cabfa0d99717eb4d109",
+  "upstream": {
+    "repository": "https://github.com/usd-wg/assets",
+    "revision": "3b75c2dad6a494897557dcca0098257bcf42a8c6",
+    "path": "full_assets/StandardShaderBall/layers/shaderball.usda",
+    "git_blob": "f15c7acae4e04163e681eb3d9b6c334f4a98b180",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "Geometry and textures: Chris Rydalch. Specification and validation: André Mazzone. Original scene inspiration and consultation: Thomas Anagnostou.",
+    "upstream_readme": "https://github.com/usd-wg/assets/blob/3b75c2dad6a494897557dcca0098257bcf42a8c6/full_assets/StandardShaderBall/README.md"
+  },
+  "retained_subset": "This single 3,354,071-byte USDA layer is retained below the repository 5 MiB fixture cap. Its referenced layers, texture maps, media, Houdini source, and all other upstream files are intentionally excluded."
+}

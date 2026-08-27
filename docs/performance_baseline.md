@@ -1,6 +1,6 @@
 # Performance and Observability Baseline
 
-This document records **measured observations**, not production performance guarantees. The measurements below use only repository-owned fixture definitions, a single Cargo job, and the pinned Rust toolchain. They are not comparable across host classes, operating systems, storage devices, or CPU power policies.
+This document records **measured observations**, not production performance guarantees. The measurements below use repository-owned fixtures plus two license-tracked external fixtures retained under explicit authorization, a single Cargo job, and the pinned Rust toolchain. They are not comparable across host classes, operating systems, storage devices, allocators, or CPU power policies.
 
 ## Reproducibility
 
@@ -35,6 +35,29 @@ CARGO_BUILD_JOBS=1 cargo bench -p vortex-bevy --bench runtime_spawn
 
 No user project, `.uasset`, staged Editor report, GLB, image, package payload, or source path is benchmarked or retained.
 
+## Production-scale fixtures and T28 measurements
+
+T28 retains one production-shaped USD layer and one real-world diffuse PNG. Each file is below the enforced 5 MiB per-file fixture cap, has a sibling checksum/provenance manifest, and is covered by the fixture-policy and checksum gates. The USD input intentionally terminates at the existing `requires_adapter` boundary because it contains variants and complex shader-network facts; this test does not misrepresent incomplete live USD composition as GLB conversion. [1] [2] [3]
+
+| Target | Fixture and source | Exact size | 95% timing interval | Result boundary |
+|---|---|---:|---:|---|
+| `usd_stage/resolve_standard_shader_ball` | ASWF USD Working Group StandardShaderBall `shaderball.usda`, CC BY 4.0, pinned to `3b75c2dad6a494897557dcca0098257bcf42a8c6` | 3,354,071 bytes | 22.391–22.636 ms | Deterministic typed stage facts and `requires_adapter`; no referenced-layer or MaterialX/EXR evaluation. |
+| `texture/normalize_polyhaven_wooden_planks_1k` | Poly Haven `wooden_planks` diffuse 1k PNG, CC0 1.0 | 5,016,652 bytes; 1024×1024 16-bit RGB | 27.440–27.523 ms | Bounded PNG header validation, SHA-256 staging identity, typed sampler, and canonical texture metadata; it is not pixel decoding or GPU upload. |
+
+The full extended core run used Criterion’s observed default configuration of a 3-second warm-up, 100 samples, and a 5-second target measurement interval. The command line attempted to request a shorter run, but Criterion reported and executed the default sample configuration, so only the parameters it actually reported are documented here. The measured intervals are therefore reproducible only when the same reported configuration and host constraints are retained.
+
+## T28 RSS and allocator observations
+
+`LinuxProcessMemoryReader` reads only `VmRSS` and `VmHWM` from `/proc/self/status`. `stats_alloc` wraps `System` in the core benchmark executable and reports allocation calls and byte requests for the process-wide benchmark region. The result is held during the “during” sample and dropped before the “after release” sample. This is a bounded measurement design: it identifies material allocation and RSS changes without adding unsafe code, a production global allocator replacement, raw source telemetry, or a claim that the counters belong exclusively to one thread. [4] [5]
+
+| One-time operation | RSS before | RSS while result live | RSS after result drop | Peak RSS while sampled | Allocations / deallocations / reallocations | Bytes allocated / deallocated / reallocated |
+|---|---:|---:|---:|---:|---:|---:|
+| `usd_stage/resolve_owned_triangle` | 13,524,992 | 13,524,992 | 13,524,992 | 13,524,992 | 97 / 53 / 21 | 8,131 / 5,304 / 3,106 |
+| `usd_stage/resolve_standard_shader_ball` | 13,524,992 | 13,983,744 | 13,983,744 | 17,256,448 | 2,473 / 2,106 / 171 | 3,480,902 / 3,434,823 / 43,815 |
+| `texture/normalize_polyhaven_wooden_planks_1k` | 13,983,744 | 18,845,696 | 13,983,744 | 18,845,696 | 13 / 5 / 8 | 5,020,895 / 2,276 / 2,136 |
+
+The production USD stage increased the observed RSS by 458,752 bytes while its snapshot stayed live, with a 17,256,448-byte high-water mark. The large PNG normalization increased RSS by 4,861,952 bytes while its staged result was live and returned to its pre-operation RSS after that result was dropped. These values are host observations, not ceiling guarantees. RSS can remain elevated because the operating system, C runtime, or allocator retains pages; conversely, allocator request counts do not account for all non-allocator memory or resident-page effects.
+
 ## Measured observations
 
 | Target | 95% interval | Interpretation |
@@ -57,4 +80,12 @@ Conversion execution now emits the `vortex.conversion.execute` span and one admi
 
 > Resource estimates are caller-provided admission budgets, not measured resident-memory accounting. They are a fail-closed safety control rather than a claim of exact allocator usage.
 
-The redaction and bounded-admission contracts are covered by repository tests. See the T27 benchmark targets under `crates/*/benches/` for reruns and [`README.md`](../README.md) for the supported conversion boundary.
+The redaction and bounded-admission contracts are covered by repository tests. T28 additionally runs end-to-end bounded-adapter tests over both production fixtures and verifies nonzero RSS/allocation observations without asserting hardware-specific values. See [`operations_and_architecture_guide.md`](operations_and_architecture_guide.md) for operator guidance and [`fixtures/production_scale/NOTICE.md`](../fixtures/production_scale/NOTICE.md) for source provenance.
+
+## References
+
+[1]: ../fixtures/production_scale/NOTICE.md "Production-scale fixture provenance"
+[2]: https://github.com/usd-wg/assets/blob/3b75c2dad6a494897557dcca0098257bcf42a8c6/full_assets/StandardShaderBall/README.md "StandardShaderBall README"
+[3]: https://polyhaven.com/license "Poly Haven Asset License"
+[4]: https://man7.org/linux/man-pages/man5/proc_pid_status.5.html "/proc/pid/status manual"
+[5]: https://docs.rs/stats_alloc/0.1.10/stats_alloc/ "stats_alloc 0.1.10 documentation"

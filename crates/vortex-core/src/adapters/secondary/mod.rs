@@ -3,6 +3,7 @@
 pub mod artifact_store;
 pub mod glb;
 pub mod godot_static_scene;
+pub mod linux_process_memory;
 pub mod texture;
 pub mod unity;
 pub mod unity_static_scene;

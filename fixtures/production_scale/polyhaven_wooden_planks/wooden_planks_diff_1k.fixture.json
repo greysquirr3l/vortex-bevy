@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "source": "wooden_planks_diff_1k.png",
+  "ownership": "third-party CC0 1.0; retained under explicit user authorization",
+  "source_format": "PNG 1.2; 1024x1024; 16-bit RGB",
+  "purpose": [
+    "production-scale base-color normalization",
+    "large PNG preflight",
+    "GLB texture staging",
+    "RSS and allocator observation"
+  ],
+  "expected_classification": "converted",
+  "sha256": "6b08165dfa7a1a5d662436cefc4566d1161540d17b5fc1314a7bfb4ee985ab2f",
+  "upstream": {
+    "asset": "Poly Haven wooden_planks diffuse 1k",
+    "asset_page": "https://polyhaven.com/a/wooden_planks",
+    "file_api": "https://api.polyhaven.com/files/wooden_planks",
+    "download_url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/wooden_planks/wooden_planks_diff_1k.png",
+    "published_md5": "34660fe5744c8e901ace51cde9313f56",
+    "published_bytes": 5016652,
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "license_notice": "Poly Haven states that its assets are CC0 and may be used and redistributed for any purpose."
+  },
+  "retained_subset": "One 5,016,652-byte diffuse PNG is retained below the repository 5 MiB fixture cap. Normal, roughness, displacement, AO, model, and material files are intentionally excluded."
+}

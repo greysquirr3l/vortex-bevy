@@ -9,3 +9,8 @@
 /.config/dotnet-tools.json merge=vortex-preserve
 /bridges/** merge=vortex-preserve
 /docs/compatibility_matrix.json merge=vortex-preserve
+
+# Preserve the exact upstream USDA bytes retained under CC BY 4.0. This source
+# contains trailing spaces and a final blank line that are covered by its fixture
+# SHA-256 provenance record; do not normalize third-party content during staging.
+/fixtures/production_scale/standard_shader_ball/shaderball.usda -whitespace

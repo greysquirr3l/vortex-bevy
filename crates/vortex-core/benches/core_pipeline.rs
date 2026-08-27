@@ -1,6 +1,7 @@
 //! Owned-fixture benchmarks for the bounded core conversion pipeline.
 
 use std::{
+    alloc::System,
     collections::{BTreeMap, BTreeSet},
     error::Error,
     fs,
@@ -9,6 +10,7 @@ use std::{
 };
 
 use criterion::{Criterion, black_box};
+use stats_alloc::{INSTRUMENTED_SYSTEM, Region, Stats, StatsAlloc};
 use vortex_core::{
     adapters::secondary::{
         glb::GlbWriter,
@@ -29,18 +31,83 @@ use vortex_core::{
 };
 
 const STAGE_FIXTURE: &str = include_str!("../../../fixtures/minimal_usda/triangle_scene.usda");
+const PRODUCTION_TEXTURE: &[u8] = include_bytes!(
+    "../../../fixtures/production_scale/polyhaven_wooden_planks/wooden_planks_diff_1k.png"
+);
+
+#[global_allocator]
+static GLOBAL: &StatsAlloc<System> = &INSTRUMENTED_SYSTEM;
 
 fn main() {
     if let Err(error) = run() {
-        eprintln!("T27 core benchmark setup failed: {error}");
+        eprintln!("T28 core benchmark setup failed: {error}");
         process::exit(1);
     }
 }
 
 fn run() -> Result<(), Box<dyn Error>> {
     let fixtures = CoreFixtures::new()?;
+    record_memory_observation("usd_stage/resolve_owned_triangle", || {
+        fixtures.stage_inspector.resolve(&fixtures.stage_request)
+    })?;
+    record_memory_observation("usd_stage/resolve_standard_shader_ball", || {
+        fixtures.stage_inspector.resolve(&fixtures.production_stage_request)
+    })?;
+    record_memory_observation("texture/normalize_polyhaven_wooden_planks_1k", || {
+        TextureNormalizer.normalize([fixtures.production_texture_input.clone()])
+    })?;
     measure_core_pipeline(&fixtures);
     Ok(())
+}
+
+fn record_memory_observation<ResultValue, OperationError, Operation>(
+    operation_name: &str,
+    operation: Operation,
+) -> Result<(), Box<dyn Error>>
+where
+    OperationError: Error + 'static,
+    Operation: FnOnce() -> Result<ResultValue, OperationError>,
+{
+    use vortex_core::adapters::secondary::linux_process_memory::LinuxProcessMemoryReader;
+
+    let reader = LinuxProcessMemoryReader;
+    let before = reader.snapshot()?;
+    let region = Region::new(GLOBAL);
+    let result = operation()?;
+    let during_operation = reader.snapshot()?;
+    let allocation = region.change();
+    drop(result);
+    let after_release = reader.snapshot()?;
+    print_memory_observation(
+        operation_name,
+        before.resident_bytes(),
+        during_operation.resident_bytes(),
+        after_release.resident_bytes(),
+        during_operation.peak_resident_bytes(),
+        allocation,
+    );
+    Ok(())
+}
+
+fn print_memory_observation(
+    operation_name: &str,
+    rss_before: u64,
+    rss_during: u64,
+    rss_after_release: u64,
+    peak_rss: u64,
+    allocation: Stats,
+) {
+    eprintln!(
+        "T28 memory observation: operation={operation_name} rss_before_bytes={rss_before} rss_during_bytes={rss_during} rss_after_release_bytes={rss_after_release} rss_during_delta_bytes={} rss_after_release_delta_bytes={} peak_rss_bytes={peak_rss} allocations={} deallocations={} reallocations={} bytes_allocated={} bytes_deallocated={} bytes_reallocated={}",
+        i128::from(rss_during) - i128::from(rss_before),
+        i128::from(rss_after_release) - i128::from(rss_before),
+        allocation.allocations,
+        allocation.deallocations,
+        allocation.reallocations,
+        allocation.bytes_allocated,
+        allocation.bytes_deallocated,
+        allocation.bytes_reallocated,
+    );
 }
 
 fn measure_core_pipeline(fixtures: &CoreFixtures) {
@@ -59,11 +126,23 @@ fn measure_core_pipeline(fixtures: &CoreFixtures) {
             black_box(fixtures.stage_inspector.resolve(black_box(&fixtures.stage_request)))
         });
     });
+    criterion.bench_function("usd_stage/resolve_standard_shader_ball", |bencher| {
+        bencher.iter(|| {
+            black_box(
+                fixtures.stage_inspector.resolve(black_box(&fixtures.production_stage_request)),
+            )
+        });
+    });
     criterion.bench_function("canonical_ir/validate_triangle", |bencher| {
         bencher.iter(|| black_box(CanonicalScene::new(black_box(fixtures.scene_template.clone()))));
     });
     criterion.bench_function("texture/normalize_owned_png", |bencher| {
         bencher.iter(|| black_box(TextureNormalizer.normalize([fixtures.texture_input.clone()])));
+    });
+    criterion.bench_function("texture/normalize_polyhaven_wooden_planks_1k", |bencher| {
+        bencher.iter(|| {
+            black_box(TextureNormalizer.normalize([fixtures.production_texture_input.clone()]))
+        });
     });
     criterion.bench_function("glb/package_triangle", |bencher| {
         bencher.iter(|| black_box(GlbWriter.package(black_box(&fixtures.scene))));
@@ -85,6 +164,8 @@ struct CoreFixtures {
     texture_package: Vec<u8>,
     stage_inspector: UsdStageInspector,
     stage_request: UsdStageRequest,
+    production_stage_request: UsdStageRequest,
+    production_texture_input: TextureInput,
     scene_template: CanonicalScene,
     scene: CanonicalScene,
     texture_input: TextureInput,
@@ -98,12 +179,25 @@ impl CoreFixtures {
         let scene = scene_template.clone();
         let root = owned_stage_root()?;
         let stage_request = UsdStageRequest::new(&root, "triangle_scene.usda".parse()?, "")?;
+        let production_stage_request = UsdStageRequest::new(
+            PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .join("../../fixtures/production_scale/standard_shader_ball"),
+            "shaderball.usda".parse()?,
+            "",
+        )?;
         let texture_input = TextureInput {
             id: TextureId::new(1),
             source: "Textures/owned.png".parse::<SourceAssetPath>()?,
             role: TextureRole::BaseColor,
             sampler: TextureSamplerInput::linear_repeat(),
             bytes: owned_png(2, 2)?,
+        };
+        let production_texture_input = TextureInput {
+            id: TextureId::new(92),
+            source: "Textures/PolyHaven/wooden_planks_diff_1k.png".parse::<SourceAssetPath>()?,
+            role: TextureRole::BaseColor,
+            sampler: TextureSamplerInput::linear_repeat(),
+            bytes: PRODUCTION_TEXTURE.to_vec(),
         };
         let manifest_ron = owned_manifest(&source)?.to_ron()?;
         Ok(Self {
@@ -112,6 +206,8 @@ impl CoreFixtures {
             stage_inspector: UsdStageInspector,
             source,
             stage_request,
+            production_stage_request,
+            production_texture_input,
             scene_template,
             scene,
             texture_input,

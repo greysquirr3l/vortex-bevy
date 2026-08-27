@@ -30,8 +30,8 @@ jobs:
         run: cargo fmt --all -- --check
       - name: Strict Clippy
         run: cargo l
-      - name: Documentation
-        run: cargo doc --workspace --no-deps
+      - name: Documentation contract
+        run: bash scripts/check-documentation.sh
 
   bridge-quality:
     name: Authorized Editor bridge quality

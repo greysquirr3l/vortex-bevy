@@ -985,35 +985,35 @@
       "id": "T28",
       "slug": "documentation-and-compatibility-matrix",
       "title": "Publish complete architecture, support, operations, and migration documentation",
-      "passes": false,
+      "passes": true,
       "criteria": [
         {
           "label": "build succeeds",
-          "passes": false
+          "passes": true
         },
         {
           "label": "all tests pass",
-          "passes": false
+          "passes": true
         },
         {
           "label": "linter clean",
-          "passes": false
+          "passes": true
         },
         {
           "label": "implementation matches goal",
-          "passes": false
+          "passes": true
         },
         {
           "label": "No documentation promises Blueprint/C++ or arbitrary cooked-content equivalence",
-          "passes": false
+          "passes": true
         },
         {
           "label": "Every documented command is executed in an automated documentation test",
-          "passes": false
+          "passes": true
         },
         {
           "label": "cargo doc --workspace --no-deps passes with denied warnings",
-          "passes": false
+          "passes": true
         }
       ]
     },
