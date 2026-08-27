@@ -338,79 +338,131 @@ impl SupportMatrixReader for StaticSupportMatrixReader {
     type Error = DomainError;
 
     fn read(&self) -> Result<Vec<CoreSupportMatrixEntry>, Self::Error> {
-        Ok(vec![
-            CoreSupportMatrixEntry {
-                capability: "unreal.uasset.metadata_preflight".to_owned(),
-                classification: ClassificationKind::RequiresAdapter,
-                remediation: Remediation::new(
-                    "Use the matching authorized Unreal Editor bridge for semantic export.",
-                )?,
-            },
-            CoreSupportMatrixEntry {
-                capability: "unreal.editor_bridge.protocol".to_owned(),
-                classification: ClassificationKind::RequiresAdapter,
-                remediation: Remediation::new(
-                    "Run the checked-in bridge only with an authorized matching Unreal Editor project.",
-                )?,
-            },
-            CoreSupportMatrixEntry {
-                capability: "unreal.cooked_or_encrypted_content".to_owned(),
-                classification: ClassificationKind::Rejected,
-                remediation: Remediation::new(
-                    "Use authorized editable project source; Vortex does not bypass access controls.",
-                )?,
-            },
-            CoreSupportMatrixEntry {
-                capability: "usd.usda.selected_stage".to_owned(),
-                classification: ClassificationKind::RequiresAdapter,
-                remediation: Remediation::new(
-                    "Use the bounded USDA adapter for selected facts; use an OpenUSD runtime for full composition.",
-                )?,
-            },
-            CoreSupportMatrixEntry {
-                capability: "unity.urp_text_project".to_owned(),
-                classification: ClassificationKind::RequiresAdapter,
-                remediation: Remediation::new(
-                    "Use Force Text source inspection for the supported subset or a matching Unity Editor for import resolution.",
-                )?,
-            },
-            CoreSupportMatrixEntry {
-                capability: "glb.deterministic_packaging".to_owned(),
-                classification: ClassificationKind::Converted,
-                remediation: Remediation::new(
-                    "Use the validated canonical scene IR and deterministic GLB package boundary.",
-                )?,
-            },
-            CoreSupportMatrixEntry {
-                capability: "artifact.atomic_publication".to_owned(),
-                classification: ClassificationKind::Converted,
-                remediation: Remediation::new(
-                    "Publish through the root-confined atomic artifact store and verify before loading.",
-                )?,
-            },
-            CoreSupportMatrixEntry {
-                capability: "bevy.0_19_verified_runtime".to_owned(),
-                classification: ClassificationKind::Converted,
-                remediation: Remediation::new(
-                    "Load only verified published manifests through the Bevy 0.19 runtime adapter.",
-                )?,
-            },
-            CoreSupportMatrixEntry {
-                capability: "e2e.synthetic_usda_fixture".to_owned(),
-                classification: ClassificationKind::Converted,
-                remediation: Remediation::new(
-                    "Use the self-authored synthetic fixture suite; real Editor validation remains opt-in.",
-                )?,
-            },
-            CoreSupportMatrixEntry {
-                capability: "e2e.synthetic_unity_urp_fixture".to_owned(),
-                classification: ClassificationKind::Converted,
-                remediation: Remediation::new(
-                    "Use the owned Force Text Lit/Unlit fixture suite; matching-Editor validation remains required for real projects.",
-                )?,
-            },
-        ])
+        let mut entries = base_support_entries()?;
+        entries.extend(evidence_support_entries()?);
+        entries.extend(packaged_usd_support_entries()?);
+        Ok(entries)
     }
+}
+
+fn base_support_entries() -> Result<Vec<CoreSupportMatrixEntry>, DomainError> {
+    entry_group(&[
+        (
+            "unreal.uasset.metadata_preflight",
+            ClassificationKind::RequiresAdapter,
+            "Use the matching authorized Unreal Editor bridge for semantic export.",
+        ),
+        (
+            "unreal.editor_bridge.protocol",
+            ClassificationKind::RequiresAdapter,
+            "Run the checked-in bridge only with an authorized matching Unreal Editor project.",
+        ),
+        (
+            "unreal.cooked_or_encrypted_content",
+            ClassificationKind::Rejected,
+            "Use authorized editable project source; Vortex does not bypass access controls.",
+        ),
+        (
+            "usd.usda.selected_stage",
+            ClassificationKind::RequiresAdapter,
+            "Use the bounded USDA adapter for selected facts; use an OpenUSD runtime for full composition.",
+        ),
+        (
+            "unity.urp_text_project",
+            ClassificationKind::RequiresAdapter,
+            "Use Force Text source inspection for the supported subset or a matching Unity Editor for import resolution.",
+        ),
+        (
+            "glb.deterministic_packaging",
+            ClassificationKind::Converted,
+            "Use the validated canonical scene IR and deterministic GLB package boundary.",
+        ),
+        (
+            "artifact.atomic_publication",
+            ClassificationKind::Converted,
+            "Publish through the root-confined atomic artifact store and verify before loading.",
+        ),
+        (
+            "bevy.0_19_verified_runtime",
+            ClassificationKind::Converted,
+            "Load only verified published manifests through the Bevy 0.19 runtime adapter.",
+        ),
+    ])
+}
+
+fn evidence_support_entries() -> Result<Vec<CoreSupportMatrixEntry>, DomainError> {
+    entry_group(&[
+        (
+            "e2e.synthetic_usda_fixture",
+            ClassificationKind::Converted,
+            "Use the self-authored synthetic fixture suite; real Editor validation remains opt-in.",
+        ),
+        (
+            "e2e.synthetic_unity_urp_fixture",
+            ClassificationKind::Converted,
+            "Use the owned Force Text Lit/Unlit fixture suite; matching-Editor validation remains required for real projects.",
+        ),
+        (
+            "e2e.authorized_unity_urp_static_scene",
+            ClassificationKind::Converted,
+            "Use the documented opt-in Unity static-scene bridge with a matching authorized Editor and URP version.",
+        ),
+        (
+            "e2e.authorized_unreal_static_scene",
+            ClassificationKind::Converted,
+            "Use the documented opt-in Unreal static-scene bridge with a matching authorized Editor project.",
+        ),
+        (
+            "unreal.fbx_tga_static_scene_canonical_glb",
+            ClassificationKind::Converted,
+            "Convert only report-confined authoritative FBX and TGA exports through the bounded canonical adapter.",
+        ),
+    ])
+}
+
+fn packaged_usd_support_entries() -> Result<Vec<CoreSupportMatrixEntry>, DomainError> {
+    entry_group(&[
+        (
+            "usd.packaged_flattened_stage",
+            ClassificationKind::Converted,
+            "Use the deterministic flattened fallback packaged before Bevy runtime loading.",
+        ),
+        (
+            "usd.packaged_variant_alternatives",
+            ClassificationKind::Converted,
+            "Pre-export named variant selections; do not evaluate live USD composition at runtime.",
+        ),
+        (
+            "usd.expanded_instances",
+            ClassificationKind::Converted,
+            "Materialize bounded instance attachments before deterministic GLB packaging.",
+        ),
+        (
+            "usd.instance_batches",
+            ClassificationKind::Converted,
+            "Lower bounded shared instances to ordinary GLB nodes referencing a shared mesh.",
+        ),
+        (
+            "usd.scene_chunks",
+            ClassificationKind::Converted,
+            "Use explicit quantized-bounds chunks atomically published beside the parent manifest.",
+        ),
+    ])
+}
+
+fn entry_group(
+    declarations: &[(&str, ClassificationKind, &str)],
+) -> Result<Vec<CoreSupportMatrixEntry>, DomainError> {
+    declarations
+        .iter()
+        .map(|(capability, classification, remediation)| {
+            Ok(CoreSupportMatrixEntry {
+                capability: (*capability).to_owned(),
+                classification: classification.clone(),
+                remediation: Remediation::new(*remediation)?,
+            })
+        })
+        .collect()
 }
 
 fn support_matrix(_mode: OutputMode) -> Result<CliReport> {

@@ -26,10 +26,10 @@ cargo run -q -p vortex-bevy -- support-matrix --format json \
   > docs/compatibility_matrix.json
 ```
 
-It is the serialized output of the same typed core support-matrix query that the CLI uses. The file labels bounded source adapters and human-gated Editor work as `requires_adapter`, protected Unreal content as `rejected`, and the tested deterministic package/publication/runtime/synthetic-fixture boundaries as `converted`.
+It is the serialized output of the same typed core support-matrix query that the CLI uses. The committed contract test compares the checked-in JSON with a fresh typed CLI report, preventing documentation drift. The file labels bounded source adapters and human-gated Editor work as `requires_adapter`, protected Unreal content as `rejected`, and the validated package/publication/runtime, synthetic-fixture, and authorized static-scene paths as `converted`.
 
-## Real-Editor Gate
+## Real-Editor Evidence
 
-T22 remains **in progress**, not complete. Its real-project acceptance path requires an authorized, redistributable Unreal sample project and a matching Editor version supplied or explicitly approved by the project owner. When available, the opt-in smoke test must use the checked-in bridge, must not place assets or credentials in CI, and must keep the synthetic suite mandatory.
+The mandatory synthetic suite remains editor-free. Its opt-in complement is complete: authorized matching Unity and Unreal Editor static-scene runs produced confined reports with explicit source identities and adapter classifications. The received Unreal FBX/TGA export was additionally converted through canonical IR, deterministic GLB packaging, atomic publication, and headless Bevy loading. These opt-in evidence runs remain outside normal CI, and no project asset, credential, or generated Editor artifact is committed.
 
 > The synthetic suite proves reproducible owned-fixture boundaries. It is not evidence that arbitrary Unreal, Unity, USD composition, shaders, scripts, or proprietary project behavior has been converted faithfully.

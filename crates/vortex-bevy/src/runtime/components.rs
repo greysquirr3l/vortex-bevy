@@ -3,7 +3,9 @@
 use std::collections::BTreeMap;
 
 use bevy::prelude::Component;
-use vortex_core::domain::{ArtifactHash, ClassificationKind, Diagnostic, SourceIdentity};
+use vortex_core::domain::{
+    ArtifactHash, ClassificationKind, Diagnostic, PackagedScene, PackagedSceneId, SourceIdentity,
+};
 
 /// Source linkage retained on a spawned Vortex scene root.
 #[derive(Clone, Debug)]
@@ -35,6 +37,28 @@ pub struct VortexDiagnosticSet(pub Vec<Diagnostic>);
 /// Selected source variants retained for runtime inspection.
 #[derive(Component, Clone, Debug)]
 pub struct VortexVariantSelection(pub BTreeMap<String, BTreeMap<String, String>>);
+
+/// Explicit prebuilt scene alternatives and chunks retained on a validated scene root.
+#[derive(Component, Clone, Debug)]
+pub struct VortexPackagedScenes(pub Vec<PackagedScene>);
+
+/// Provenance retained on a scene instance selected from a packaged variant alternative.
+#[derive(Component, Clone, Debug, Eq, PartialEq)]
+pub struct VortexPackagedVariant {
+    /// Parent root whose selection owns this package instance.
+    pub parent: bevy::prelude::Entity,
+    /// Stable package identity.
+    pub id: PackagedSceneId,
+}
+
+/// Provenance retained on a separately loaded scene chunk.
+#[derive(Component, Clone, Debug, Eq, PartialEq)]
+pub struct VortexSceneChunk {
+    /// Parent root that owns this independently loadable chunk.
+    pub parent: bevy::prelude::Entity,
+    /// Stable package identity for the chunk.
+    pub id: PackagedSceneId,
+}
 
 /// Marker for a scene root created from a validated Vortex manifest.
 #[derive(Component, Clone, Copy, Debug, Default, Eq, PartialEq)]

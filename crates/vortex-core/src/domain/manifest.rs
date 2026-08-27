@@ -5,7 +5,8 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 use super::{
-    ArtifactHash, ClassificationKind, ConversionClassification, Diagnostic, SourceIdentity,
+    ArtifactHash, ClassificationKind, ConversionClassification, Diagnostic, PackagedScene,
+    PackagedSceneError, PackagedSceneId, PackagedSceneMode, SourceIdentity,
 };
 
 pub const CURRENT_SCHEMA_VERSION: u16 = 1;
@@ -67,6 +68,11 @@ pub enum CompatibilityCapability {
     BevyAnimations,
     UrpLitSubset,
     UsdPreviewSurface,
+    UsdFlattenedStage,
+    UsdPackagedVariants,
+    UsdExpandedInstances,
+    UsdInstanceBatches,
+    UsdSceneChunks,
     UnrealEditorExport,
 }
 
@@ -94,6 +100,28 @@ pub enum ManifestError {
     EmptyBevyVersion,
     #[error("manifest source diagnostic classification must match its parent source")]
     ClassificationMismatch,
+    #[error("manifest packaged scene declaration is invalid: {source}")]
+    InvalidPackagedScene { source: PackagedSceneError },
+    #[error("manifest packaged scene identifier is duplicated: {id}")]
+    DuplicatePackagedScene { id: PackagedSceneId },
+    #[error("manifest packaged scene {id} has an unsafe artifact path: {path}")]
+    UnsafePackagedScenePath { id: PackagedSceneId, path: String },
+    #[error("manifest packaged scene {id} does not declare a GLB artifact: {path}")]
+    MissingPackagedSceneArtifact { id: PackagedSceneId, path: String },
+    #[error("manifest packaged scenes cannot share an artifact path: {path}")]
+    DuplicatePackagedSceneArtifact { path: String },
+    #[error(
+        "manifest packaged scene {id} source link is absent from manifest sources: {source_identity}"
+    )]
+    MissingPackagedSceneSource { id: PackagedSceneId, source_identity: String },
+    #[error("manifest packaged scene {id} has no declared parent: {parent}")]
+    MissingPackagedSceneParent { id: PackagedSceneId, parent: PackagedSceneId },
+    #[error("manifest packaged scene {id} must directly descend from a flattened package")]
+    InvalidPackagedSceneParent { id: PackagedSceneId },
+    #[error("manifest packaged scene declarations require exactly one flattened fallback")]
+    InvalidFlattenedPackagedSceneCount,
+    #[error("manifest packaged scene {id} requires compatibility capability {capability:?}")]
+    MissingPackagedSceneCapability { id: PackagedSceneId, capability: CompatibilityCapability },
     #[error("manifest serialization failed: {source}")]
     Serialization { source: ron::Error },
 }
@@ -105,6 +133,9 @@ pub struct SceneManifest {
     pub profile_hash: ArtifactHash,
     pub artifacts: Vec<ManifestArtifact>,
     pub sources: Vec<ManifestSource>,
+    /// Explicit prebuilt alternatives and chunks. Empty for legacy single-scene manifests.
+    #[serde(default)]
+    pub packaged_scenes: Vec<PackagedScene>,
     pub compatibility: CompatibilityRequirements,
 }
 
@@ -128,11 +159,28 @@ impl SceneManifest {
             profile_hash,
             artifacts,
             sources,
+            packaged_scenes: Vec::new(),
             compatibility,
         }
         .canonicalize();
         manifest.validate()?;
         Ok(manifest)
+    }
+
+    /// Adds explicit runtime packages and validates their parent/artifact relationships.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ManifestError`] when package identities, paths, parents, or GLB artifacts are
+    /// invalid.
+    pub fn with_packaged_scenes(
+        mut self,
+        packaged_scenes: Vec<PackagedScene>,
+    ) -> Result<Self, ManifestError> {
+        self.packaged_scenes = packaged_scenes;
+        self = self.canonicalize();
+        self.validate()?;
+        Ok(self)
     }
 
     /// Parses a bounded RON manifest and normalizes deterministic ordering.
@@ -169,6 +217,10 @@ impl SceneManifest {
             left.kind.cmp(&right.kind).then_with(|| left.path.cmp(&right.path))
         });
         self.sources.sort_by_key(ManifestSource::identity_key);
+        self.packaged_scenes.sort_by_key(|package| package.id.clone());
+        for package in &mut self.packaged_scenes {
+            package.source_links.sort_by_key(ToString::to_string);
+        }
         self
     }
 
@@ -211,7 +263,109 @@ impl SceneManifest {
                 return Err(ManifestError::ClassificationMismatch);
             }
         }
+        self.validate_packaged_scenes()?;
         Ok(())
+    }
+
+    fn validate_packaged_scenes(&self) -> Result<(), ManifestError> {
+        if self.packaged_scenes.is_empty() {
+            return Ok(());
+        }
+        let flattened = self
+            .packaged_scenes
+            .iter()
+            .filter(|package| package.mode == PackagedSceneMode::Flattened)
+            .count();
+        if flattened != 1 {
+            return Err(ManifestError::InvalidFlattenedPackagedSceneCount);
+        }
+        let packages = self
+            .packaged_scenes
+            .iter()
+            .map(|package| (package.id.clone(), package))
+            .collect::<BTreeMap<_, _>>();
+        let paths = self
+            .packaged_scenes
+            .iter()
+            .map(|package| package.artifact_path.as_str())
+            .collect::<BTreeSet<_>>();
+        if paths.len() != self.packaged_scenes.len() {
+            let duplicate = self
+                .packaged_scenes
+                .windows(2)
+                .filter_map(|pair| pair.first().zip(pair.get(1)))
+                .find_map(|(left, right)| {
+                    (left.artifact_path == right.artifact_path).then(|| left.artifact_path.clone())
+                })
+                .ok_or(ManifestError::InvalidFlattenedPackagedSceneCount)?;
+            return Err(ManifestError::DuplicatePackagedSceneArtifact { path: duplicate });
+        }
+        if packages.len() != self.packaged_scenes.len() {
+            let duplicate = self
+                .packaged_scenes
+                .windows(2)
+                .filter_map(|pair| pair.first().zip(pair.get(1)))
+                .find_map(|(left, right)| (left.id == right.id).then(|| left.id.clone()))
+                .ok_or(ManifestError::InvalidFlattenedPackagedSceneCount)?;
+            return Err(ManifestError::DuplicatePackagedScene { id: duplicate });
+        }
+        for package in &self.packaged_scenes {
+            package.validate().map_err(|source| ManifestError::InvalidPackagedScene { source })?;
+            if !self.compatibility.required_capabilities.contains(&package_capability(package.mode))
+            {
+                return Err(ManifestError::MissingPackagedSceneCapability {
+                    id: package.id.clone(),
+                    capability: package_capability(package.mode),
+                });
+            }
+            for source in &package.source_links {
+                if !self.sources.iter().any(|manifest_source| manifest_source.identity == *source) {
+                    return Err(ManifestError::MissingPackagedSceneSource {
+                        id: package.id.clone(),
+                        source_identity: source.to_string(),
+                    });
+                }
+            }
+            if !is_safe_relative_path(&package.artifact_path) {
+                return Err(ManifestError::UnsafePackagedScenePath {
+                    id: package.id.clone(),
+                    path: package.artifact_path.clone(),
+                });
+            }
+            let is_glb = self.artifacts.iter().any(|artifact| {
+                artifact.kind == ManifestArtifactKind::Glb && artifact.path == package.artifact_path
+            });
+            if !is_glb {
+                return Err(ManifestError::MissingPackagedSceneArtifact {
+                    id: package.id.clone(),
+                    path: package.artifact_path.clone(),
+                });
+            }
+            if let Some(parent) = &package.parent {
+                let parent_package = packages.get(parent).ok_or_else(|| {
+                    ManifestError::MissingPackagedSceneParent {
+                        id: package.id.clone(),
+                        parent: parent.clone(),
+                    }
+                })?;
+                if parent_package.mode != PackagedSceneMode::Flattened {
+                    return Err(ManifestError::InvalidPackagedSceneParent {
+                        id: package.id.clone(),
+                    });
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
+const fn package_capability(mode: PackagedSceneMode) -> CompatibilityCapability {
+    match mode {
+        PackagedSceneMode::Flattened => CompatibilityCapability::UsdFlattenedStage,
+        PackagedSceneMode::VariantAlternative => CompatibilityCapability::UsdPackagedVariants,
+        PackagedSceneMode::ExpandedInstances => CompatibilityCapability::UsdExpandedInstances,
+        PackagedSceneMode::InstanceBatch => CompatibilityCapability::UsdInstanceBatches,
+        PackagedSceneMode::Chunk => CompatibilityCapability::UsdSceneChunks,
     }
 }
 

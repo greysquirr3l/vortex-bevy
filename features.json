@@ -769,35 +769,35 @@
       "id": "T22",
       "slug": "end-to-end-conversion-suite",
       "title": "Prove the complete conversion pipeline with golden end-to-end suites",
-      "passes": false,
+      "passes": true,
       "criteria": [
         {
           "label": "build succeeds",
-          "passes": false
+          "passes": true
         },
         {
           "label": "all tests pass",
-          "passes": false
+          "passes": true
         },
         {
           "label": "linter clean",
-          "passes": false
+          "passes": true
         },
         {
           "label": "implementation matches goal",
-          "passes": false
+          "passes": true
         },
         {
           "label": "End-to-end suite proves the primary artifact contract loads in Bevy",
-          "passes": false
+          "passes": true
         },
         {
           "label": "Second-run checksums equal first-run checksums for deterministic fixtures",
-          "passes": false
+          "passes": true
         },
         {
           "label": "Every intentional failure yields a specific classification and diagnostic code",
-          "passes": false
+          "passes": true
         }
       ]
     },
@@ -877,35 +877,35 @@
       "id": "T25",
       "slug": "usd-variants-instancing-and-streaming",
       "title": "Complete selected USD variants, instances, payload policy, and scene chunking",
-      "passes": false,
+      "passes": true,
       "criteria": [
         {
           "label": "build succeeds",
-          "passes": false
+          "passes": true
         },
         {
           "label": "all tests pass",
-          "passes": false
+          "passes": true
         },
         {
           "label": "linter clean",
-          "passes": false
+          "passes": true
         },
         {
           "label": "implementation matches goal",
-          "passes": false
+          "passes": true
         },
         {
           "label": "Variant/instance tests prove no source selection is silently discarded",
-          "passes": false
+          "passes": true
         },
         {
           "label": "Limit-exceeding fixtures fail before excessive allocation",
-          "passes": false
+          "passes": true
         },
         {
           "label": "Bevy runtime retains source links after variant/chunk operations",
-          "passes": false
+          "passes": true
         }
       ]
     },

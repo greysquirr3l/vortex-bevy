@@ -77,7 +77,11 @@ impl GlbWriter {
     pub fn package(&self, scene: &CanonicalScene) -> Result<GlbPackage, GlbPackageError> {
         let scene = CanonicalScene::new(scene.clone())
             .map_err(|source| GlbPackageError::SceneInvalid { source })?;
-        reject_deferred_features(&scene)?;
+        let instance_meshes = scene
+            .instances
+            .iter()
+            .map(|instance| (instance.id.get(), instance.mesh))
+            .collect::<BTreeMap<_, _>>();
         let material_indices = index_by_id(scene.materials.iter().map(|value| value.id.get()))?;
         let stream_indices = index_by_id(scene.vertex_streams.iter().map(|value| value.id.get()))?;
         let primitive_indices = index_by_id(scene.primitives.iter().map(|value| value.id.get()))?;
@@ -134,11 +138,15 @@ impl GlbWriter {
         )?;
         let nodes = package_nodes(
             &scene.nodes,
-            &node_indices,
-            &mesh_indices,
-            &camera_indices,
-            &light_indices,
-            &mesh_skins,
+            &NodeContext {
+                nodes: &scene.nodes,
+                node_indices: &node_indices,
+                mesh_indices: &mesh_indices,
+                camera_indices: &camera_indices,
+                light_indices: &light_indices,
+                mesh_skins: &mesh_skins,
+                instance_meshes: &instance_meshes,
+            },
         )?;
         let roots = root_nodes(&scene.nodes, &node_indices)?;
         let binary = buffer.bytes;
@@ -221,13 +229,6 @@ fn assemble_document(parts: PackagedScene) -> Result<Value, GlbPackageError> {
         document.insert("extensionsUsed".to_owned(), json!(extensions));
     }
     Ok(Value::Object(document))
-}
-
-const fn reject_deferred_features(scene: &CanonicalScene) -> Result<(), GlbPackageError> {
-    if !scene.instances.is_empty() {
-        return Err(GlbPackageError::DeferredFeature { feature: "shared instances" });
-    }
-    Ok(())
 }
 
 fn index_by_id(ids: impl IntoIterator<Item = u32>) -> Result<BTreeMap<u32, u32>, GlbPackageError> {
@@ -1076,44 +1077,27 @@ fn push_animation_values(
     Ok(index)
 }
 
-fn package_nodes(
-    nodes: &[Node],
-    node_indices: &BTreeMap<u32, u32>,
-    mesh_indices: &BTreeMap<u32, u32>,
-    camera_indices: &BTreeMap<u32, u32>,
-    light_indices: &BTreeMap<u32, u32>,
-    mesh_skins: &BTreeMap<u32, u32>,
-) -> Result<Vec<Value>, GlbPackageError> {
-    nodes
-        .iter()
-        .map(|node| {
-            package_node(
-                node,
-                nodes,
-                node_indices,
-                mesh_indices,
-                camera_indices,
-                light_indices,
-                mesh_skins,
-            )
-        })
-        .collect()
+struct NodeContext<'a> {
+    nodes: &'a [Node],
+    node_indices: &'a BTreeMap<u32, u32>,
+    mesh_indices: &'a BTreeMap<u32, u32>,
+    camera_indices: &'a BTreeMap<u32, u32>,
+    light_indices: &'a BTreeMap<u32, u32>,
+    mesh_skins: &'a BTreeMap<u32, u32>,
+    instance_meshes: &'a BTreeMap<u32, crate::domain::scene_ir::MeshId>,
 }
 
-fn package_node(
-    node: &Node,
-    nodes: &[Node],
-    node_indices: &BTreeMap<u32, u32>,
-    mesh_indices: &BTreeMap<u32, u32>,
-    camera_indices: &BTreeMap<u32, u32>,
-    light_indices: &BTreeMap<u32, u32>,
-    mesh_skins: &BTreeMap<u32, u32>,
-) -> Result<Value, GlbPackageError> {
-    let children = nodes
+fn package_nodes(nodes: &[Node], context: &NodeContext<'_>) -> Result<Vec<Value>, GlbPackageError> {
+    nodes.iter().map(|node| package_node(node, context)).collect()
+}
+
+fn package_node(node: &Node, context: &NodeContext<'_>) -> Result<Value, GlbPackageError> {
+    let children = context
+        .nodes
         .iter()
         .filter(|candidate| candidate.parent == Some(node.id))
         .map(|child| {
-            node_indices.get(&child.id.get()).copied().ok_or_else(|| {
+            context.node_indices.get(&child.id.get()).copied().ok_or_else(|| {
                 GlbPackageError::MissingReference { kind: "child node", id: child.id.get() }
             })
         })
@@ -1126,27 +1110,49 @@ fn package_node(
     if !children.is_empty() {
         value.insert("children".to_owned(), json!(children));
     }
-    if let Some(mesh) = node.mesh {
-        value.insert("mesh".to_owned(), Value::from(index_for(mesh.get(), mesh_indices, "mesh")?));
+    let mesh = resolved_node_mesh(node, context.instance_meshes)?;
+    if let Some(mesh) = mesh {
+        value.insert(
+            "mesh".to_owned(),
+            Value::from(index_for(mesh.get(), context.mesh_indices, "mesh")?),
+        );
     }
-    if let Some(mesh) = node.mesh
-        && let Some(skin) = mesh_skins.get(&mesh.get())
+    if let Some(mesh) = mesh
+        && let Some(skin) = context.mesh_skins.get(&mesh.get())
     {
         value.insert("skin".to_owned(), Value::from(*skin));
     }
     if let Some(camera) = node.camera {
         value.insert(
             "camera".to_owned(),
-            Value::from(index_for(camera.get(), camera_indices, "camera")?),
+            Value::from(index_for(camera.get(), context.camera_indices, "camera")?),
         );
     }
     if let Some(light) = node.light {
         value.insert(
             "extensions".to_owned(),
-            json!({"KHR_lights_punctual": {"light": index_for(light.get(), light_indices, "light")?}}),
+            json!({"KHR_lights_punctual": {"light": index_for(light.get(), context.light_indices, "light")?}}),
         );
     }
     Ok(Value::Object(value))
+}
+
+fn resolved_node_mesh(
+    node: &Node,
+    instance_meshes: &BTreeMap<u32, crate::domain::scene_ir::MeshId>,
+) -> Result<Option<crate::domain::scene_ir::MeshId>, GlbPackageError> {
+    match (node.mesh, node.instance) {
+        (Some(mesh), None) => Ok(Some(mesh)),
+        (None, Some(instance)) => {
+            instance_meshes.get(&instance.get()).copied().map(Some).ok_or_else(|| {
+                GlbPackageError::MissingReference { kind: "instance", id: instance.get() }
+            })
+        }
+        (None, None) => Ok(None),
+        (Some(_), Some(_)) => Err(GlbPackageError::DeferredFeature {
+            feature: "node with direct mesh and shared instance",
+        }),
+    }
 }
 
 fn root_nodes(

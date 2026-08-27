@@ -5,6 +5,7 @@ mod desktop;
 mod inspection;
 mod lifecycle;
 mod manifest;
+mod packages;
 mod viewer;
 
 use std::{collections::BTreeMap, path::Path};
@@ -38,8 +39,9 @@ use vortex_core::{
 };
 
 pub use components::{
-    VortexArtifactHash, VortexConversionStatus, VortexDiagnosticSet, VortexRuntimeDiagnostic,
-    VortexSceneRoot, VortexSourceLink, VortexSourceRecord, VortexVariantSelection,
+    VortexArtifactHash, VortexConversionStatus, VortexDiagnosticSet, VortexPackagedScenes,
+    VortexPackagedVariant, VortexRuntimeDiagnostic, VortexSceneChunk, VortexSceneRoot,
+    VortexSourceLink, VortexSourceRecord, VortexVariantSelection,
 };
 pub use desktop::{
     ViewerFrameRequest, ViewerInputGate, ViewerPanelLayout, VortexDesktopViewerPlugin,
@@ -53,6 +55,10 @@ pub use lifecycle::{
     VortexSceneLifecycle, reload_scene, reload_scene_in_world, unload_scene, unload_scene_in_world,
 };
 pub use manifest::{VerifiedVortexArtifact, verify_manifest};
+pub use packages::{
+    load_packaged_chunk, load_packaged_chunk_in_world, switch_packaged_variant,
+    switch_packaged_variant_in_world,
+};
 pub use viewer::{
     ViewerCommand, ViewerCommandQueue, VortexViewerPlugin, VortexViewerState, update_viewer_state,
 };
@@ -209,6 +215,7 @@ pub fn load_manifest_and_spawn_in_world(world: &mut World, manifest_path: &Path)
             VortexArtifactHash(verified.glb_hash),
             VortexDiagnosticSet(diagnostics),
             VortexVariantSelection(variants),
+            VortexPackagedScenes(verified.manifest.packaged_scenes),
             VortexSceneLifecycle::initial(manifest_path.to_path_buf()),
         ))
         .id())

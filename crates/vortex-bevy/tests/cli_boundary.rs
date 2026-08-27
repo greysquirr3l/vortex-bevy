@@ -1,4 +1,5 @@
 use std::{
+    collections::BTreeSet,
     error::Error,
     fs,
     path::{Path, PathBuf},
@@ -53,20 +54,48 @@ fn support_matrix_returns_a_machine_readable_typed_report() -> Result<(), Box<dy
 
     match report {
         CliReport::SupportMatrix { entries } => {
-            assert_eq!(entries.len(), 10);
-            let encoded = serde_json::to_string(&entries)?;
-            for capability in [
-                "glb.deterministic_packaging",
+            let expected = BTreeSet::from([
                 "artifact.atomic_publication",
                 "bevy.0_19_verified_runtime",
-                "e2e.synthetic_usda_fixture",
+                "e2e.authorized_unity_urp_static_scene",
+                "e2e.authorized_unreal_static_scene",
                 "e2e.synthetic_unity_urp_fixture",
-            ] {
+                "e2e.synthetic_usda_fixture",
+                "glb.deterministic_packaging",
+                "unreal.cooked_or_encrypted_content",
+                "unreal.editor_bridge.protocol",
+                "unreal.fbx_tga_static_scene_canonical_glb",
+                "unreal.uasset.metadata_preflight",
+                "unity.urp_text_project",
+                "usd.expanded_instances",
+                "usd.instance_batches",
+                "usd.packaged_flattened_stage",
+                "usd.packaged_variant_alternatives",
+                "usd.scene_chunks",
+                "usd.usda.selected_stage",
+            ]);
+            assert_eq!(entries.len(), expected.len());
+            let encoded = serde_json::to_string(&entries)?;
+            for capability in expected {
                 assert!(encoded.contains(capability));
             }
         }
         other => return Err(format!("unexpected report: {other:?}").into()),
     }
+    Ok(())
+}
+
+#[test]
+fn checked_in_compatibility_matrix_is_generated_from_the_typed_cli_model()
+-> Result<(), Box<dyn Error>> {
+    let report = run_from(["vortex-bevy", "support-matrix", "--format", "json"])?;
+    let generated = serde_json::to_value(report)?;
+    let checked_in = serde_json::from_str::<serde_json::Value>(include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../docs/compatibility_matrix.json"
+    )))?;
+
+    assert_eq!(generated, checked_in);
     Ok(())
 }
 

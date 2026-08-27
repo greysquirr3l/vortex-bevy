@@ -50,6 +50,46 @@
       "capability": "e2e.synthetic_unity_urp_fixture",
       "classification": "converted",
       "remediation": "Use the owned Force Text Lit/Unlit fixture suite; matching-Editor validation remains required for real projects."
+    },
+    {
+      "capability": "e2e.authorized_unity_urp_static_scene",
+      "classification": "converted",
+      "remediation": "Use the documented opt-in Unity static-scene bridge with a matching authorized Editor and URP version."
+    },
+    {
+      "capability": "e2e.authorized_unreal_static_scene",
+      "classification": "converted",
+      "remediation": "Use the documented opt-in Unreal static-scene bridge with a matching authorized Editor project."
+    },
+    {
+      "capability": "unreal.fbx_tga_static_scene_canonical_glb",
+      "classification": "converted",
+      "remediation": "Convert only report-confined authoritative FBX and TGA exports through the bounded canonical adapter."
+    },
+    {
+      "capability": "usd.packaged_flattened_stage",
+      "classification": "converted",
+      "remediation": "Use the deterministic flattened fallback packaged before Bevy runtime loading."
+    },
+    {
+      "capability": "usd.packaged_variant_alternatives",
+      "classification": "converted",
+      "remediation": "Pre-export named variant selections; do not evaluate live USD composition at runtime."
+    },
+    {
+      "capability": "usd.expanded_instances",
+      "classification": "converted",
+      "remediation": "Materialize bounded instance attachments before deterministic GLB packaging."
+    },
+    {
+      "capability": "usd.instance_batches",
+      "classification": "converted",
+      "remediation": "Lower bounded shared instances to ordinary GLB nodes referencing a shared mesh."
+    },
+    {
+      "capability": "usd.scene_chunks",
+      "classification": "converted",
+      "remediation": "Use explicit quantized-bounds chunks atomically published beside the parent manifest."
     }
   ]
 }

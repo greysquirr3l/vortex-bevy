@@ -6,6 +6,7 @@
 pub mod conversion;
 pub mod identity;
 pub mod manifest;
+pub mod packaged_scene;
 pub mod scene_ir;
 
 pub use conversion::{
@@ -21,5 +22,8 @@ pub use manifest::{
     CompatibilityCapability, CompatibilityRequirements, DEFAULT_MANIFEST_LIMIT_BYTES,
     ManifestArtifact, ManifestArtifactKind, ManifestError, ManifestSource, SceneManifest,
     SchemaVersion,
+};
+pub use packaged_scene::{
+    PackagedScene, PackagedSceneError, PackagedSceneId, PackagedSceneMode, SceneChunkBounds,
 };
 pub use scene_ir::{CanonicalScene, CoordinateNormalization, SceneIrError};

@@ -5,10 +5,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, Result, anyhow, bail};
 use vortex_core::domain::{
     ArtifactHash, CompatibilityCapability, DEFAULT_MANIFEST_LIMIT_BYTES, ManifestArtifactKind,
-    SceneManifest,
+    PackagedSceneMode, SceneManifest,
 };
 
 /// A Vortex artifact verified before it is handed to Bevy's asset pipeline.
@@ -48,11 +48,7 @@ pub fn verify_manifest(manifest_path: &Path) -> Result<VerifiedVortexArtifact> {
     ensure_bevy_019(&manifest.compatibility.minimum_bevy_version)?;
     ensure_supported_capabilities(&manifest.compatibility.required_capabilities)?;
 
-    let Some(glb) =
-        manifest.artifacts.iter().find(|artifact| artifact.kind == ManifestArtifactKind::Glb)
-    else {
-        bail!("manifest declares no GLB artifact");
-    };
+    let glb = declared_initial_glb(&manifest)?;
     let glb_asset_path = glb.path.clone();
     let glb_hash = glb.hash.clone();
     let Some(parent) = manifest_path.parent() else {
@@ -78,6 +74,30 @@ pub fn verify_manifest(manifest_path: &Path) -> Result<VerifiedVortexArtifact> {
     Ok(VerifiedVortexArtifact { manifest, glb_asset_path, glb_path, glb_hash })
 }
 
+fn declared_initial_glb(
+    manifest: &SceneManifest,
+) -> Result<&vortex_core::domain::ManifestArtifact> {
+    if let Some(flattened) =
+        manifest.packaged_scenes.iter().find(|package| package.mode == PackagedSceneMode::Flattened)
+    {
+        return manifest
+            .artifacts
+            .iter()
+            .find(|artifact| {
+                artifact.kind == ManifestArtifactKind::Glb
+                    && artifact.path == flattened.artifact_path
+            })
+            .ok_or_else(|| {
+                anyhow!("manifest flattened package declares no matching GLB artifact")
+            });
+    }
+    manifest
+        .artifacts
+        .iter()
+        .find(|artifact| artifact.kind == ManifestArtifactKind::Glb)
+        .ok_or_else(|| anyhow!("manifest declares no GLB artifact"))
+}
+
 fn ensure_bevy_019(version: &str) -> Result<()> {
     let mut parts = version.trim().split('.');
     let major = parts.next().unwrap_or_default();
@@ -97,7 +117,12 @@ fn ensure_supported_capabilities(
             | CompatibilityCapability::BevyPunctualLights
             | CompatibilityCapability::BevyAnimations
             | CompatibilityCapability::UrpLitSubset
-            | CompatibilityCapability::UsdPreviewSurface => {}
+            | CompatibilityCapability::UsdPreviewSurface
+            | CompatibilityCapability::UsdFlattenedStage
+            | CompatibilityCapability::UsdPackagedVariants
+            | CompatibilityCapability::UsdExpandedInstances
+            | CompatibilityCapability::UsdInstanceBatches
+            | CompatibilityCapability::UsdSceneChunks => {}
             CompatibilityCapability::UnrealEditorExport => {
                 bail!(
                     "runtime artifacts must not require an Unreal Editor export capability at load time"

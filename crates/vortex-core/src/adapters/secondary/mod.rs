@@ -9,4 +9,5 @@ pub mod unreal_bridge;
 pub mod unreal_package;
 pub mod unreal_static_scene;
 pub mod urp_material;
+pub mod usd_packages;
 pub mod usd_stage;
