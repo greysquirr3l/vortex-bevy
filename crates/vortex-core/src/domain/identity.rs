@@ -68,6 +68,7 @@ validated_string!(SourceAssetPath, "source asset path", validate_relative_path);
 validated_string!(ExportProfileName, "export profile name", validate_profile_name);
 validated_string!(UnrealObjectPath, "Unreal object path", validate_object_path);
 validated_string!(UsdPrimPath, "USD prim path", validate_object_path);
+validated_string!(GodotResourcePath, "Godot resource path", validate_godot_resource_path);
 validated_string!(StageSelection, "stage selection", validate_selection);
 validated_string!(UnityAssetGuid, "Unity asset GUID", validate_guid);
 
@@ -106,6 +107,10 @@ pub enum SourceIdentity {
         asset_guid: UnityAssetGuid,
         object_id: UnityObjectId,
     },
+    Godot {
+        project_root: ProjectRoot,
+        resource_path: GodotResourcePath,
+    },
 }
 
 impl fmt::Display for SourceIdentity {
@@ -122,6 +127,9 @@ impl fmt::Display for SourceIdentity {
                 "unity:{project_root}:{asset_path}:{asset_guid}:{}",
                 object_id.get()
             ),
+            Self::Godot { project_root, resource_path } => {
+                write!(formatter, "godot:{project_root}:{resource_path}")
+            }
         }
     }
 }
@@ -244,6 +252,22 @@ fn validate_object_path(value: &str, kind: &'static str) -> Result<(), IdentityE
         return Err(IdentityError::Invalid { kind, value: value.to_owned() });
     }
 
+    Ok(())
+}
+
+fn validate_godot_resource_path(value: &str, kind: &'static str) -> Result<(), IdentityError> {
+    if value.is_empty() {
+        return Err(IdentityError::Empty { kind });
+    }
+
+    let valid_prefix = value.starts_with("res://") || value.starts_with("godot://temporary/");
+    if !valid_prefix
+        || value.contains('\\')
+        || value.contains('\0')
+        || value.split('/').any(|part| part == "." || part == "..")
+    {
+        return Err(IdentityError::Invalid { kind, value: value.to_owned() });
+    }
     Ok(())
 }
 

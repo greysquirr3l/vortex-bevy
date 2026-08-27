@@ -74,6 +74,17 @@ def test_bridge_sources_keep_the_required_authorization_boundaries() -> None:
             "_is_confined",
             "--staging-root",
         ),
+        ROOT / "godot" / "vortex_godot_static_scene_bridge.gd": (
+            "OS.get_cmdline_user_args()",
+            "GLTFDocument.new()",
+            "append_from_scene",
+            "write_to_filesystem",
+            "GPUParticles3D.new()",
+            "Image.create",
+            "_is_confined",
+            "root.free()",
+            "--staging-root",
+        ),
     }
     for path, markers in required_markers.items():
         source = path.read_text(encoding="utf-8")

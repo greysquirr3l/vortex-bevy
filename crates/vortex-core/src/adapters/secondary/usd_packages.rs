@@ -158,7 +158,9 @@ impl UsdPackagePlanner {
         let facts = snapshot.facts.iter().collect::<BTreeSet<_>>();
         let stage = match require_usd_source(&snapshot.source)? {
             SourceIdentity::Usd { stage, .. } => stage.as_str(),
-            SourceIdentity::Unreal { .. } | SourceIdentity::Unity { .. } => {
+            SourceIdentity::Unreal { .. }
+            | SourceIdentity::Unity { .. }
+            | SourceIdentity::Godot { .. } => {
                 return Err(UsdPackageError::NonUsdSource);
             }
         };
