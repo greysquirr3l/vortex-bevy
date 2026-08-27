@@ -2,8 +2,13 @@ use std::{cell::Cell, error::Error, fmt, str::FromStr};
 
 use vortex_core::{
     application::command::{
-        execute_conversion::{self, ArtifactStore, ConversionRunner, ExecutionOutcome},
+        execute_conversion::{
+            self, ArtifactStore, BoundedExecuteConversionError, ConversionRunner, ExecutionOutcome,
+        },
         plan_conversion::{self, ExistingConversionReader, PlanAction, PlanConversion},
+        resource_limits::{
+            ConversionResourceError, ConversionResourceGovernor, ConversionResourceLimits,
+        },
     },
     domain::{
         ArtifactHash, ClassificationKind, ConversionAggregate, ConversionClassification,
@@ -134,5 +139,32 @@ fn missing_compatible_conversion_executes_and_persists_once() -> Result<(), Box<
     assert_eq!(runner.calls.get(), 1);
     assert_eq!(store.calls.get(), 1);
 
+    Ok(())
+}
+
+#[test]
+fn bounded_execution_rejects_exhausted_capacity_before_running_adapters()
+-> Result<(), Box<dyn Error>> {
+    let reader = Reader { existing: None, calls: Cell::new(0) };
+    let plan = plan_conversion::handle(
+        PlanConversion { source: source()?, context: context()? },
+        &reader,
+    )?;
+    let runner = Runner { calls: Cell::new(0) };
+    let store = Store { calls: Cell::new(0) };
+    let governor = ConversionResourceGovernor::new(ConversionResourceLimits::new(1, 64)?);
+    let reservation = governor.acquire(64)?;
+
+    let outcome = execute_conversion::handle_bounded(plan, &runner, &store, &governor, 1);
+
+    assert!(matches!(
+        outcome,
+        Err(BoundedExecuteConversionError::Resource {
+            source: ConversionResourceError::CapacityExhausted
+        })
+    ));
+    assert_eq!(runner.calls.get(), 0);
+    assert_eq!(store.calls.get(), 0);
+    drop(reservation);
     Ok(())
 }

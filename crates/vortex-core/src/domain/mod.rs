@@ -6,6 +6,7 @@
 pub mod conversion;
 pub mod identity;
 pub mod manifest;
+pub mod observability;
 pub mod packaged_scene;
 pub mod scene_ir;
 
@@ -23,6 +24,7 @@ pub use manifest::{
     ManifestArtifact, ManifestArtifactKind, ManifestError, ManifestSource, SceneManifest,
     SchemaVersion,
 };
+pub use observability::{ConversionTraceContext, RedactedSourceIdentity, SourceEngine};
 pub use packaged_scene::{
     PackagedScene, PackagedSceneError, PackagedSceneId, PackagedSceneMode, SceneChunkBounds,
 };

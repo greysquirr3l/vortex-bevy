@@ -21,6 +21,15 @@ image.workspace = true
 sha2.workspace = true
 thiserror.workspace = true
 uasset.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+criterion.workspace = true
+tracing-subscriber.workspace = true
+
+[[bench]]
+name = "core_pipeline"
+harness = false
 
 [lints]
 workspace = true
