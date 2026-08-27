@@ -5358,6 +5358,7 @@ dependencies = [
  "anyhow",
  "criterion",
  "fbxcel-dom",
+ "flate2",
  "gltf",
  "image",
  "ron 0.10.1",

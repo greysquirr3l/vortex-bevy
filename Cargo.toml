@@ -25,6 +25,7 @@ ron = "0.10.1"
 serde_json = "1.0.149"
 gltf = { version = "1.4.1", default-features = false, features = ["names"] }
 fbxcel-dom = "0.0.10"
+flate2 = "1.1.5"
 image = { version = "0.25.9", default-features = false, features = ["png", "tga"] }
 uasset = "0.6.0"
 serde = { version = "1.0.228", features = ["derive"] }

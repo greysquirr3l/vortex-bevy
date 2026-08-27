@@ -64,6 +64,8 @@ T27 adds Criterion benchmarks for the owned Unreal metadata decoder, selected US
 
 T28 adds a Linux `/proc/self/status` RSS/high-water sampler and benchmark-only `System` allocation counters, plus license-tracked production-scale USDA and PNG integration fixtures. These are aggregate profiling observations rather than allocation enforcement or memory-leak conclusions. The complete installation, support, authorization, CLI, output, runtime, performance, fixture, migration, and troubleshooting guide is [`docs/operations_and_architecture_guide.md`](docs/operations_and_architecture_guide.md).
 
+T29 adds an optional caller-owned, in-process selected-USDA queue. It accepts only root-confined local `.usda` and `.usda.gz` requests, has a bounded non-blocking backlog, limits plain and decompressed stage bytes, reserves capacity through the existing governor before reading, and reports one typed result per request. It is for isolation and bounded throughput, not a faster single-stage parser, network streaming, archive traversal, or general OpenUSD composition. The measured bottleneck analysis is [`docs/t29_streaming_bottleneck_analysis.md`](docs/t29_streaming_bottleneck_analysis.md); release and recovery procedures are in [`docs/release_hardening.md`](docs/release_hardening.md).
+
 The T23 owned Unity URP fixture suite verifies Force Text source inspection, Lit/Unlit material mapping, canonical source links, deterministic GLB and manifest publication, and headless Bevy material spawning. A separate authorized real Unity `6000.5.10f1` / URP `17.5.0` batch validation has now traversed a controlled static mesh, generated URP Lit material and PNG, camera, directional light, and explicit `BoxCollider` `requires_adapter` result through typed canonical IR, deterministic GLB, atomic publication, and headless Bevy component instantiation. It preserves the temporary scene GUID/object identity and was independently verified to restore the user project. See [`docs/unity_static_scene_real_evidence.md`](docs/unity_static_scene_real_evidence.md). Broader imported-asset import resolution and Shader Graph behavior remain Editor-gated or unsupported. The earlier selected-FBX and complex-VFX smoke boundary is recorded in [`docs/unity_editor_bridge_smoke_evidence.md`](docs/unity_editor_bridge_smoke_evidence.md).
 
 The remaining conversion commands are deliberately explicit about their recovery status: they parse and validate typed inputs but report unavailable downstream capability until canonical IR, packaging, publication, and artifact discovery are rebuilt. They do not pretend to convert an asset.
@@ -82,8 +84,9 @@ cargo test --workspace --all-features
 cargo fmt --all -- --check
 cargo l
 cargo deny --all-features check
-cargo audit
+cargo audit --no-fetch
 bash scripts/check-bridge-quality.sh
+bash scripts/check-release-readiness.sh
 ```
 
 The Wiggum implementation plan is `plan.toml`. Generated task state is maintained in `PROGRESS.md`; do not edit generated task filenames by hand without regenerating the scaffold.

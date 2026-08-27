@@ -17,11 +17,11 @@ jobs:
     name: Analyze Rust
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: github/codeql-action/init@v3
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: github/codeql-action/init@6f5948dfacef28e207b48d0905cf90c03365536d # v3
         with:
           languages: rust
           build-mode: manual
-      - uses: dtolnay/rust-toolchain@1.97.1
+      - uses: dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772 # master
       - run: cargo build --workspace --all-targets --all-features
-      - uses: github/codeql-action/analyze@v3
+      - uses: github/codeql-action/analyze@6f5948dfacef28e207b48d0905cf90c03365536d # v3

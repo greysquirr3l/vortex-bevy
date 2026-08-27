@@ -5,11 +5,14 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     error::Error,
     fs,
+    io::Write,
     path::PathBuf,
     process,
+    sync::Arc,
 };
 
 use criterion::{Criterion, black_box};
+use flate2::{Compression, write::GzEncoder};
 use stats_alloc::{INSTRUMENTED_SYSTEM, Region, Stats, StatsAlloc};
 use vortex_core::{
     adapters::secondary::{
@@ -17,6 +20,13 @@ use vortex_core::{
         texture::{TextureInput, TextureNormalizer, TextureRole, TextureSamplerInput},
         unreal_texture2d_metadata::UnrealTexture2DMetadataDecoder,
         usd_stage::{UsdStageInspector, UsdStageRequest},
+    },
+    application::command::{
+        resource_limits::{ConversionResourceGovernor, ConversionResourceLimits},
+        stream_usd::{
+            StreamingUsdStageJob, StreamingUsdStageLimits, StreamingUsdStageQueue,
+            StreamingUsdStageRequest,
+        },
     },
     domain::{
         ArtifactHash, CompatibilityCapability, CompatibilityRequirements, ManifestArtifact,
@@ -34,6 +44,8 @@ const STAGE_FIXTURE: &str = include_str!("../../../fixtures/minimal_usda/triangl
 const PRODUCTION_TEXTURE: &[u8] = include_bytes!(
     "../../../fixtures/production_scale/polyhaven_wooden_planks/wooden_planks_diff_1k.png"
 );
+const PRODUCTION_STAGE: &[u8] =
+    include_bytes!("../../../fixtures/production_scale/standard_shader_ball/shaderball.usda");
 
 #[global_allocator]
 static GLOBAL: &StatsAlloc<System> = &INSTRUMENTED_SYSTEM;
@@ -57,6 +69,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         TextureNormalizer.normalize([fixtures.production_texture_input.clone()])
     })?;
     measure_core_pipeline(&fixtures);
+    fixtures.shutdown()?;
     Ok(())
 }
 
@@ -133,6 +146,22 @@ fn measure_core_pipeline(fixtures: &CoreFixtures) {
             )
         });
     });
+    criterion.bench_function("usd_stage/queue_standard_shader_ball_plain", |bencher| {
+        bencher.iter(|| {
+            let submitted = fixtures
+                .streaming_stage_queue
+                .submit(black_box(fixtures.production_streaming_stage_request.clone()));
+            black_box(submitted.and_then(StreamingUsdStageJob::wait))
+        });
+    });
+    criterion.bench_function("usd_stage/queue_standard_shader_ball_gzip", |bencher| {
+        bencher.iter(|| {
+            let submitted = fixtures
+                .streaming_stage_queue
+                .submit(black_box(fixtures.production_gzip_stage_request.clone()));
+            black_box(submitted.and_then(StreamingUsdStageJob::wait))
+        });
+    });
     criterion.bench_function("canonical_ir/validate_triangle", |bencher| {
         bencher.iter(|| black_box(CanonicalScene::new(black_box(fixtures.scene_template.clone()))));
     });
@@ -165,6 +194,9 @@ struct CoreFixtures {
     stage_inspector: UsdStageInspector,
     stage_request: UsdStageRequest,
     production_stage_request: UsdStageRequest,
+    production_streaming_stage_request: StreamingUsdStageRequest,
+    production_gzip_stage_request: StreamingUsdStageRequest,
+    streaming_stage_queue: StreamingUsdStageQueue,
     production_texture_input: TextureInput,
     scene_template: CanonicalScene,
     scene: CanonicalScene,
@@ -185,6 +217,18 @@ impl CoreFixtures {
             "shaderball.usda".parse()?,
             "",
         )?;
+        let stream_limit_bytes = 4_u64 * 1024 * 1024;
+        let streaming_governor = Arc::new(ConversionResourceGovernor::new(
+            ConversionResourceLimits::new(1, usize::try_from(stream_limit_bytes)?)?,
+        ));
+        let streaming_stage_queue = StreamingUsdStageQueue::new(
+            StreamingUsdStageLimits::new(1, 1, stream_limit_bytes)?,
+            streaming_governor,
+        )?;
+        let production_streaming_stage_request =
+            StreamingUsdStageRequest::plain_usda(production_stage_request.clone());
+        let production_gzip_stage_request =
+            StreamingUsdStageRequest::gzip_usda(production_gzip_stage_request()?);
         let texture_input = TextureInput {
             id: TextureId::new(1),
             source: "Textures/owned.png".parse::<SourceAssetPath>()?,
@@ -207,12 +251,20 @@ impl CoreFixtures {
             source,
             stage_request,
             production_stage_request,
+            production_streaming_stage_request,
+            production_gzip_stage_request,
+            streaming_stage_queue,
             production_texture_input,
             scene_template,
             scene,
             texture_input,
             manifest_ron,
         })
+    }
+
+    fn shutdown(self) -> Result<(), Box<dyn Error>> {
+        self.streaming_stage_queue.shutdown()?;
+        Ok(())
     }
 }
 
@@ -229,6 +281,15 @@ fn owned_stage_root() -> Result<PathBuf, Box<dyn Error>> {
     fs::create_dir_all(&root)?;
     fs::write(root.join("triangle_scene.usda"), STAGE_FIXTURE)?;
     Ok(root)
+}
+
+fn production_gzip_stage_request() -> Result<UsdStageRequest, Box<dyn Error>> {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("target/t29-production-gzip-stage");
+    fs::create_dir_all(&root)?;
+    let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
+    encoder.write_all(PRODUCTION_STAGE)?;
+    fs::write(root.join("shaderball.usda.gz"), encoder.finish()?)?;
+    Ok(UsdStageRequest::new(&root, "shaderball.usda.gz".parse()?, "")?)
 }
 
 fn triangle_scene(source: SourceIdentity) -> Result<CanonicalScene, Box<dyn Error>> {

@@ -1021,39 +1021,39 @@
       "id": "T29",
       "slug": "release-hardening",
       "title": "Perform release hardening, reproducibility verification, and supply-chain review",
-      "passes": false,
+      "passes": true,
       "criteria": [
         {
           "label": "build succeeds",
-          "passes": false
+          "passes": true
         },
         {
           "label": "all tests pass",
-          "passes": false
+          "passes": true
         },
         {
           "label": "linter clean",
-          "passes": false
+          "passes": true
         },
         {
           "label": "implementation matches goal",
-          "passes": false
+          "passes": true
         },
         {
           "label": "Fresh-checkout preflight succeeds on supported CI targets",
-          "passes": false
+          "passes": true
         },
         {
           "label": "Release fixture artifacts meet checksum reproducibility policy",
-          "passes": false
+          "passes": true
         },
         {
           "label": "No secret, key, prohibited fixture, GPL-linked component, or undocumented unsafe block remains",
-          "passes": false
+          "passes": true
         },
         {
           "label": "Release notes accurately state supported and unsupported capability boundaries",
-          "passes": false
+          "passes": true
         }
       ]
     },

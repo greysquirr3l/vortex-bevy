@@ -89,6 +89,12 @@ impl ConversionResourceGovernor {
         Self { limits, state: Mutex::new(ResourceState { in_flight: 0, reserved_bytes: 0 }) }
     }
 
+    /// Returns the immutable limits enforced by this governor.
+    #[must_use]
+    pub const fn limits(&self) -> ConversionResourceLimits {
+        self.limits
+    }
+
     /// Attempts to reserve the estimated memory and one in-flight slot.
     ///
     /// The returned permit releases its reservation on drop. This API is synchronous and never

@@ -217,7 +217,19 @@ impl UsdStageInspector {
         }
         let text =
             String::from_utf8(bytes).map_err(|source| UsdStageError::InvalidUtf8 { source })?;
-        parse_usda(request, metadata.len(), &text)
+        Self::resolve_usda_text(request, metadata.len(), &text)
+    }
+
+    pub(crate) fn resolve_usda_text(
+        request: &UsdStageRequest,
+        bytes: u64,
+        text: &str,
+    ) -> Result<UsdStageSnapshot, UsdStageError> {
+        parse_usda(request, bytes, text)
+    }
+
+    pub(crate) fn resolve_stage_file(request: &UsdStageRequest) -> Result<PathBuf, UsdStageError> {
+        canonical_stage_file(request)
     }
 }
 
