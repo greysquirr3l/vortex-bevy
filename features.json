@@ -337,35 +337,35 @@
       "id": "T10",
       "slug": "unreal-editor-bridge-integration",
       "title": "T09b \u2014 Validate authorized Unreal Editor export integration",
-      "passes": false,
+      "passes": true,
       "criteria": [
         {
           "label": "build succeeds",
-          "passes": false
+          "passes": true
         },
         {
           "label": "all tests pass",
-          "passes": false
+          "passes": true
         },
         {
           "label": "linter clean",
-          "passes": false
+          "passes": true
         },
         {
           "label": "implementation matches goal",
-          "passes": false
+          "passes": true
         },
         {
           "label": "Approved real-Editor export produces source identities and artifact paths matching the protocol contract",
-          "passes": false
+          "passes": true
         },
         {
           "label": "Known non-exportable input yields a visible requires_adapter or unsupported classification",
-          "passes": false
+          "passes": true
         },
         {
           "label": "Normal CI remains synthetic and does not require an Unreal Editor installation",
-          "passes": false
+          "passes": true
         }
       ]
     },

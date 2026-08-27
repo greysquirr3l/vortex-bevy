@@ -46,6 +46,15 @@ def test_bridge_sources_keep_the_required_authorization_boundaries() -> None:
             "task.prompt = False",
             "_confined",
         ),
+        ROOT / "unreal" / "vortex_unreal_static_scene_bridge.py": (
+            "TEMPORARY_PACKAGE",
+            "does_directory_exist",
+            "EditorLevelLibrary.new_level",
+            "unreal.AssetExportTask()",
+            "task.automated = True",
+            "task.prompt = False",
+            "delete_directory",
+        ),
         ROOT / "unity" / "Editor" / "VortexUnityBridge.cs": (
             "AssetDatabase.GUIDToAssetPath",
             "VORTEX_UNITY_GUIDS",
