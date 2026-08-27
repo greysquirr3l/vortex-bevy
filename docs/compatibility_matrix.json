@@ -7,6 +7,11 @@
       "remediation": "Use the matching authorized Unreal Editor bridge for semantic export."
     },
     {
+      "capability": "unreal.utexture2d.ue5_8_2_asset_registry_metadata",
+      "classification": "requires_adapter",
+      "remediation": "Inspect only the bounded UE 5.8.2 Texture2D tag table; use the authorized Editor bridge for texture export."
+    },
+    {
       "capability": "unreal.editor_bridge.protocol",
       "classification": "requires_adapter",
       "remediation": "Run the checked-in bridge only with an authorized matching Unreal Editor project."

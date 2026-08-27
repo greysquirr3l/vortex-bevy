@@ -353,6 +353,11 @@ fn base_support_entries() -> Result<Vec<CoreSupportMatrixEntry>, DomainError> {
             "Use the matching authorized Unreal Editor bridge for semantic export.",
         ),
         (
+            "unreal.utexture2d.ue5_8_2_asset_registry_metadata",
+            ClassificationKind::RequiresAdapter,
+            "Inspect only the bounded UE 5.8.2 Texture2D tag table; use the authorized Editor bridge for texture export.",
+        ),
+        (
             "unreal.editor_bridge.protocol",
             ClassificationKind::RequiresAdapter,
             "Run the checked-in bridge only with an authorized matching Unreal Editor project.",

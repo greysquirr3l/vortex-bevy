@@ -66,6 +66,7 @@ fn support_matrix_returns_a_machine_readable_typed_report() -> Result<(), Box<dy
                 "unreal.editor_bridge.protocol",
                 "unreal.fbx_tga_static_scene_canonical_glb",
                 "unreal.uasset.metadata_preflight",
+                "unreal.utexture2d.ue5_8_2_asset_registry_metadata",
                 "unity.urp_text_project",
                 "usd.expanded_instances",
                 "usd.instance_batches",

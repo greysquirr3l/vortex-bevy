@@ -10,6 +10,8 @@
 | Unity | [`unity/Editor/VortexUnityBridge.cs`](unity/Editor/VortexUnityBridge.cs) | Unity GUID | Approved direct-source mesh, glTF, image, and audio files | `VORTEX_UNITY_GUIDS=<guids> VORTEX_UNITY_STAGING_ROOT=<dir> VORTEX_UNITY_REPORT=<file> Unity -batchmode -nographics -quit -projectPath <project> -executeMethod Vortex.UnityBridge.VortexUnityBridge.RunFromCommandLine` |
 | Godot | [`godot/vortex_godot_bridge.gd`](godot/vortex_godot_bridge.gd) | `res://` resource path | Approved direct-source glTF, image, and audio files | `godot --headless --path <project> --script <absolute bridge path> -- --assets <res-paths> --staging-root <dir> --report <file>` |
 
+T26 also provides [`unreal/vortex_unreal_texture2d_metadata_bridge.py`](unreal/vortex_unreal_texture2d_metadata_bridge.py), a separate **non-mutating** UE 5.8.2 Asset Registry oracle for one explicit `Texture2D` object. It emits no asset content and uses the strict `vortex.unreal-texture-metadata/v1` protocol rather than the shared export-report protocol. Its exact selected tags, comparison contract, and authorized invocation are documented in [`../docs/unreal_texture2d_metadata_contract.md`](../docs/unreal_texture2d_metadata_contract.md).
+
 ## Shared contract
 
 Each report has these top-level fields:

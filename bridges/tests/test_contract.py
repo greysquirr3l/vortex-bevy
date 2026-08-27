@@ -12,6 +12,7 @@ from jsonschema import Draft202012Validator
 ROOT = Path(__file__).resolve().parents[1]
 PROTOCOL_VERSION = "vortex.editor-bridge/v1"
 STATIC_SCENE_PROTOCOL_VERSION = "vortex.unity-static-scene/v1"
+UNREAL_TEXTURE_METADATA_PROTOCOL_VERSION = "vortex.unreal-texture-metadata/v1"
 CLASSIFICATIONS = frozenset(
     {"converted", "baked", "requires_adapter", "unsupported", "rejected"},
 )
@@ -54,6 +55,14 @@ def test_bridge_sources_keep_the_required_authorization_boundaries() -> None:
             "task.automated = True",
             "task.prompt = False",
             "delete_directory",
+        ),
+        ROOT / "unreal" / "vortex_unreal_texture2d_metadata_bridge.py": (
+            "AssetRegistryHelpers.get_asset_registry",
+            "k2_get_asset_by_object_path",
+            "include_only_on_disk_assets=True",
+            "get_tag_value",
+            "temporary.replace",
+            "--staging-root",
         ),
         ROOT / "unity" / "Editor" / "VortexUnityBridge.cs": (
             "AssetDatabase.GUIDToAssetPath",
@@ -110,6 +119,25 @@ def test_static_scene_report_contract_is_strict_and_confined() -> None:
 
     unexpected = copy.deepcopy(report)
     unexpected["scene"]["unexpected"] = True
+    assert list(validator.iter_errors(unexpected))
+
+
+def test_unreal_texture_metadata_oracle_contract_is_strict_and_confined() -> None:
+    """Validate the owned UE 5.8.2 metadata oracle protocol and selected tag boundary."""
+    report = _texture_metadata_oracle()
+    schema = _read_json(ROOT / "contract" / "vortex-unreal-texture-metadata-v1.schema.json")
+    validator = Draft202012Validator(schema)
+    errors = sorted(validator.iter_errors(report), key=lambda error: list(error.path))
+    assert not errors, errors[0].message
+    assert report["protocol_version"] == UNREAL_TEXTURE_METADATA_PROTOCOL_VERSION
+    assert report["records"][0]["asset_kind"] == "Texture2D"
+
+    malformed = copy.deepcopy(report)
+    malformed["records"][0]["tags"]["Dimensions"] = "0x32"
+    assert list(validator.iter_errors(malformed))
+
+    unexpected = copy.deepcopy(report)
+    unexpected["records"][0]["tags"]["UnboundedTag"] = "value"
     assert list(validator.iter_errors(unexpected))
 
 
@@ -198,6 +226,28 @@ def _static_scene_report() -> dict[str, Any]:
                 "reason": (
                     "BoxCollider physics shape is outside this render-scene conversion subset."
                 ),
+            }
+        ],
+    }
+
+
+def _texture_metadata_oracle() -> dict[str, Any]:
+    """Return the owned one-record UE 5.8.2 Texture2D metadata oracle fixture."""
+    return {
+        "engine": "unreal",
+        "engine_version": "5.8.2",
+        "protocol_version": UNREAL_TEXTURE_METADATA_PROTOCOL_VERSION,
+        "records": [
+            {
+                "asset_kind": "Texture2D",
+                "cooked": False,
+                "object_path": "/Game/Textures/T_Fixture.T_Fixture",
+                "tags": {
+                    "CompressionSettings": "TC_Default",
+                    "Dimensions": "256x128",
+                    "Filter": "TF_Trilinear",
+                    "PixelFormat": "PF_B8G8R8A8",
+                },
             }
         ],
     }

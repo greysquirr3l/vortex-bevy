@@ -31,6 +31,10 @@ Malformed headers, invalid magic, parser incompatibility, cooked context, and a 
 
 Repository policy forbids committing real Unreal package payloads. Tests therefore use self-authored in-memory or temporary synthetic bytes to verify successful header facts, declared package-dependency reporting, unknown-class reporting, incompatible-version rejection, missing external-bulk companion rejection, malformed-header handling, cooked-sidecar rejection, size-limit enforcement, symlink escape rejection, and a bounded malformed-byte fuzz smoke corpus. A real authorized Editor/project validation remains human-gated under T10; it is not implied by this metadata contract.
 
+## T26 selected direct decoder
+
+The optional selected direct decoder for a legacy tagged `UTexture2D` Asset Registry record is separately version-locked to UE 5.8.2. It reads no texture pixels and remains `requires_adapter`; its strict binary, oracle, and companion-data boundaries are documented in [`unreal_texture2d_metadata_contract.md`](unreal_texture2d_metadata_contract.md).
+
 ## CLI recovery status
 
 The typed Clap surface accepts `inspect`, `plan`, `convert`, `verify`, `view`, `support-matrix`, and `version`, with text or JSON reports. During recovery, only Unreal `inspect`, `support-matrix`, and `version` execute a concrete adapter/query. The remaining commands parse and validate their typed inputs but report an explicit unavailable capability until their downstream canonical-IR, packaging, publication, and artifact-discovery tasks are rebuilt.

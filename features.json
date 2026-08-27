@@ -913,35 +913,35 @@
       "id": "T26",
       "slug": "direct-asset-decoder-expansion",
       "title": "Expand direct authorized asset decoding only where it beats Editor export",
-      "passes": false,
+      "passes": true,
       "criteria": [
         {
           "label": "build succeeds",
-          "passes": false
+          "passes": true
         },
         {
           "label": "all tests pass",
-          "passes": false
+          "passes": true
         },
         {
           "label": "linter clean",
-          "passes": false
+          "passes": true
         },
         {
           "label": "implementation matches goal",
-          "passes": false
+          "passes": true
         },
         {
           "label": "Approved decoder fixture output matches the independent oracle on semantic fields",
-          "passes": false
+          "passes": true
         },
         {
           "label": "Malformed decoder corpus produces errors with no panic/timeout/unbounded allocation",
-          "passes": false
+          "passes": true
         },
         {
           "label": "Support matrix names exact class/version boundaries",
-          "passes": false
+          "passes": true
         }
       ]
     },

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vortex-bevy.invalid/bridges/vortex-unreal-texture-metadata-v1.schema.json",
+  "title": "Vortex Unreal Texture Metadata Oracle v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["engine", "engine_version", "protocol_version", "records"],
+  "properties": {
+    "engine": {"const": "unreal"},
+    "engine_version": {"const": "5.8.2"},
+    "protocol_version": {"const": "vortex.unreal-texture-metadata/v1"},
+    "records": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["asset_kind", "cooked", "object_path", "tags"],
+        "properties": {
+          "asset_kind": {"const": "Texture2D"},
+          "cooked": {"const": false},
+          "object_path": {"type": "string", "pattern": "^/Game/.+\\..+$"},
+          "tags": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["Dimensions", "PixelFormat", "CompressionSettings"],
+            "properties": {
+              "Dimensions": {"type": "string", "pattern": "^[1-9][0-9]*x[1-9][0-9]*$"},
+              "PixelFormat": {"enum": ["PF_B8G8R8A8", "PF_DXT1", "PF_DXT5", "PF_BC5", "PF_BC7"]},
+              "CompressionSettings": {"enum": ["TC_Default", "TC_Normalmap", "TC_Masks", "TC_Grayscale"]},
+              "Filter": {"enum": ["TF_Default", "TF_Nearest", "TF_Bilinear", "TF_Trilinear"]},
+              "SourceFileHash": {"type": "string", "pattern": "^[0-9A-Fa-f]{64}$"}
+            }
+          }
+        }
+      }
+    }
+  }
+}
