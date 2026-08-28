@@ -97,7 +97,7 @@ fn read_current_status() -> Result<ProcessMemorySnapshot, ProcessMemoryError> {
 }
 
 #[cfg(not(target_os = "linux"))]
-fn read_current_status() -> Result<ProcessMemorySnapshot, ProcessMemoryError> {
+const fn read_current_status() -> Result<ProcessMemorySnapshot, ProcessMemoryError> {
     Err(ProcessMemoryError::UnsupportedPlatform)
 }
 
