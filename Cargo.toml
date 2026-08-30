@@ -36,6 +36,15 @@ tracing-subscriber = "0.3.22"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
+# `linker_messages` surfaces `macOS ld: __eh_frame section too large (max 16MB)` on
+# Bevy/egui-heavy test binaries. The warning is a performance hint
+# ("performance of exception handling might be affected"), not a correctness
+# issue, and the rustc lint itself states it ignores `-D warnings`. Reducing
+# the underlying eh_frame size would require `panic = "abort"` for tests,
+# changing test panic semantics project-wide; per-target linker flags are not
+# portable across macOS ld / GNU ld. Allow the lint here so test binaries
+# still compile under `build.warnings = "deny"`.
+linker_messages = "allow"
 
 [workspace.lints.clippy]
 unwrap_used = "deny"

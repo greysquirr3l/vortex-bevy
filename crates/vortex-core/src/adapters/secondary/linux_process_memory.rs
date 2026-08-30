@@ -84,6 +84,10 @@ impl LinuxProcessMemoryReader {
     ///
     /// Returns a typed error on unsupported targets, unavailable process status,
     /// absent metrics, malformed metrics, or byte-conversion overflow.
+    #[expect(
+        clippy::missing_const_for_fn,
+        reason = "Const qualification is target-dependent: the Linux shim performs filesystem I/O (fs::read_to_string is not const-evaluable), while the non-Linux shim is const. The `snapshot` signature must compile uniformly across cfg targets."
+    )]
     pub fn snapshot(&self) -> Result<ProcessMemorySnapshot, ProcessMemoryError> {
         read_current_status()
     }

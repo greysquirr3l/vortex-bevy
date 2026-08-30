@@ -8,6 +8,10 @@ Editable Unreal source projects use the matching Unreal Editor as the authoritat
 
 Cooked, encrypted, unowned, DRM-protected, or otherwise unauthorized inputs are rejected by default. Vortex-Bevy does not bypass encryption, guess keys, convert Blueprint/C++ behavior, or claim equivalence for unsupported engine systems.
 
+## Security scope
+
+Vortex-Bevy is an offline CLI plus an optional Bevy 0.19 desktop viewer. It does not expose an HTTP server, connect to a database, or fetch URLs on the user's behalf. The attack surface is local-file ingestion (bounded per-format size caps, typed deserialization), local subprocess invocation (the authorized Unreal/Unity/Godot Editor through typed `Command::new(...).args(...)` adapters — no shell, no string concatenation), and the Bevy desktop window. Cryptography is limited to SHA-256 content hashing via `sha2`; there is no encryption, no RNG, and no network code path. Path traversal is prevented by systematic `canonicalize + starts_with(root)` confinement in 22 source files and the equivalent `_normalized + relative_to` check in the Python bridge. See [`docs/security_audit_t30.md`](docs/security_audit_t30.md) for the full audit.
+
 ## Workspace layout
 
 ```text
