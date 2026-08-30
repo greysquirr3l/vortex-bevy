@@ -4,23 +4,31 @@
 //! Commands whose downstream recovery task is not yet implemented report an explicit
 //! unavailable capability rather than guessing at a conversion result.
 
-use std::{ffi::OsString, path::PathBuf, process::ExitCode};
+use std::{ffi::OsString, path::PathBuf, process::ExitCode, str::FromStr};
 
 use anyhow::{Context, Result, anyhow};
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use serde::Serialize;
 use vortex_core::{
-    adapters::secondary::unreal_package::UnrealPackageInspector,
+    adapters::secondary::{
+        artifact_store::AtomicArtifactStore, conversion_pipeline::ConversionPipeline,
+        unreal_package::UnrealPackageInspector,
+    },
     application::{
-        command::inspect_input::{InspectInput, handle as inspect_input},
+        command::{
+            execute_conversion::handle as execute_conversion,
+            inspect_input::{InspectInput, handle as inspect_input},
+            plan_conversion::{PlanConversion, handle as plan_conversion},
+        },
         query::support_matrix::{
             SupportMatrixEntry as CoreSupportMatrixEntry, SupportMatrixReader,
             handle as read_support_matrix,
         },
     },
     domain::{
-        ClassificationKind, DomainError, ExportProfileName, ProjectRoot, Remediation,
-        SourceAssetPath, SourceIdentity, StageSelection, UnrealObjectPath,
+        ArtifactHash, ClassificationKind, ConversionContext, DomainError, ExportProfileName,
+        OutputRoot, ProjectRoot, Remediation, SourceAssetPath, SourceIdentity, StageSelection,
+        UnityAssetGuid, UnityObjectId, UnrealObjectPath, UsdPrimPath,
     },
 };
 
@@ -142,6 +150,13 @@ struct ConversionArgs {
     /// Optional selected USD variant expression.
     #[arg(long, value_parser = parse_stage_selection)]
     variant: Option<StageSelection>,
+    /// Engine-specific secondary identifier: Unreal object path, USD prim path,
+    /// Unity object id, or Godot resource path. Required for all engines except Godot.
+    #[arg(long, value_parser = parse_optional_non_empty_string)]
+    object: Option<String>,
+    /// Unity asset GUID. Required only when `--engine unity`.
+    #[arg(long, value_parser = parse_optional_non_empty_string)]
+    guid: Option<String>,
     /// Explicit payload policy for supported future USD composition modes.
     #[arg(long, value_enum, default_value_t = PayloadPolicy::Forbid)]
     payload_policy: PayloadPolicy,
@@ -211,6 +226,24 @@ pub enum CliReport {
         remediation: String,
         facts: Vec<String>,
     },
+    /// A deterministic conversion plan resolved without publishing artifacts.
+    Plan {
+        conversion_id: String,
+        source: String,
+        action: String,
+        classification: String,
+        reason: String,
+        remediation: String,
+    },
+    /// A conversion executed or was reused from the artifact store.
+    Convert {
+        conversion_id: String,
+        source: String,
+        action: String,
+        classification: String,
+        reason: String,
+        remediation: String,
+    },
     /// A command was parsed safely but its downstream recovery task is unavailable.
     Unavailable { command: String, capability: String, remediation: String },
     /// A static support-matrix row represents a tested boundary.
@@ -242,8 +275,8 @@ fn run(cli: Cli) -> Result<CliReport> {
         Command::Inspect(arguments) => inspect(arguments),
         Command::SupportMatrix(arguments) => support_matrix(arguments.format),
         Command::Version(arguments) => Ok(version_report(arguments.format)),
-        Command::Plan(arguments) => unavailable_conversion("plan", &arguments),
-        Command::Convert(arguments) => unavailable_conversion("convert", &arguments),
+        Command::Plan(arguments) => plan(&arguments),
+        Command::Convert(arguments) => convert(&arguments),
         Command::Verify(arguments) => unavailable_identifier_command("verify", &arguments),
         Command::View(arguments) => unavailable_view(&arguments),
     }
@@ -281,12 +314,163 @@ fn inspect(arguments: InspectArgs) -> Result<CliReport> {
     })
 }
 
-fn unavailable_conversion(command: &str, arguments: &ConversionArgs) -> Result<CliReport> {
+fn plan(arguments: &ConversionArgs) -> Result<CliReport> {
     validate_conversion_arguments(arguments)?;
-    Ok(CliReport::Unavailable {
-        command: command.to_owned(),
-        capability: "conversion orchestration".to_owned(),
-        remediation: "Recovery must complete canonical IR, packaging, and publication before this command can execute.".to_owned(),
+    let source = build_source_identity(arguments.engine, arguments)?;
+    let context = build_conversion_context(arguments)?;
+    let source_string = source.to_string();
+    let store = open_artifact_store(&arguments.output)?;
+    let plan = plan_conversion(PlanConversion { source, context }, &store)
+        .with_context(|| format!("could not resolve conversion plan for {source_string}"))?;
+    let (action, aggregate) = match &plan.action {
+        vortex_core::application::command::plan_conversion::PlanAction::Execute => {
+            ("execute".to_owned(), None)
+        }
+        vortex_core::application::command::plan_conversion::PlanAction::Reuse(existing) => {
+            ("reuse".to_owned(), Some(existing.as_ref()))
+        }
+    };
+    let classification = aggregate
+        .and_then(|value| value.classification())
+        .map_or_else(pending_classification, classification_record);
+    Ok(CliReport::Plan {
+        conversion_id: plan.id.as_str().to_owned(),
+        source: source_string,
+        action,
+        classification: classification_label(&classification.kind).to_owned(),
+        reason: classification.reason,
+        remediation: classification.remediation,
+    })
+}
+
+fn convert(arguments: &ConversionArgs) -> Result<CliReport> {
+    validate_conversion_arguments(arguments)?;
+    let source = build_source_identity(arguments.engine, arguments)?;
+    let context = build_conversion_context(arguments)?;
+    let source_string = source.to_string();
+    let store = open_artifact_store(&arguments.output)?;
+    let plan = plan_conversion(PlanConversion { source, context }, &store)
+        .with_context(|| format!("could not resolve conversion plan for {source_string}"))?;
+    let runner = ConversionPipeline::new(&arguments.project, &arguments.output);
+    let outcome = execute_conversion(plan, &runner, &store)
+        .with_context(|| format!("conversion execution failed for {source_string}"))?;
+    let (action, aggregate) = match &outcome {
+        vortex_core::application::command::execute_conversion::ExecutionOutcome::Executed(
+            value,
+        ) => ("executed".to_owned(), value.as_ref()),
+        vortex_core::application::command::execute_conversion::ExecutionOutcome::Reused(value) => {
+            ("reused".to_owned(), value.as_ref())
+        }
+    };
+    let classification =
+        aggregate.classification().map_or_else(pending_classification, classification_record);
+    Ok(CliReport::Convert {
+        conversion_id: aggregate.id().as_str().to_owned(),
+        source: source_string,
+        action,
+        classification: classification_label(&classification.kind).to_owned(),
+        reason: classification.reason,
+        remediation: classification.remediation,
+    })
+}
+
+struct ClassificationRecord {
+    kind: ClassificationKind,
+    reason: String,
+    remediation: String,
+}
+
+fn classification_record(
+    classification: &vortex_core::domain::ConversionClassification,
+) -> ClassificationRecord {
+    ClassificationRecord {
+        kind: classification.kind.clone(),
+        reason: classification.reason.clone(),
+        remediation: classification.remediation.as_str().to_owned(),
+    }
+}
+
+fn pending_classification() -> ClassificationRecord {
+    ClassificationRecord {
+        kind: ClassificationKind::RequiresAdapter,
+        reason: "plan resolved without a classification; awaiting downstream adapter".to_owned(),
+        remediation: "Re-run with a recognized engine or invoke the editor bridge for this source."
+            .to_owned(),
+    }
+}
+
+fn build_source_identity(engine: Engine, arguments: &ConversionArgs) -> Result<SourceIdentity> {
+    let object = arguments.object.as_deref();
+    match engine {
+        Engine::Unreal => {
+            let object_path =
+                object.ok_or_else(|| anyhow!("--object is required for Unreal conversion"))?;
+            Ok(SourceIdentity::Unreal {
+                project_root: logical_project_root(&arguments.project)?,
+                asset_path: arguments.asset.clone(),
+                object_path: UnrealObjectPath::from_str(object_path).map_err(|error| {
+                    anyhow!("--object is not a valid Unreal object path: {error}")
+                })?,
+            })
+        }
+        Engine::Usd => {
+            let prim_path = object.ok_or_else(|| {
+                anyhow!("--object is required for USD conversion (USD prim path)")
+            })?;
+            let selection = arguments.variant.clone().unwrap_or_else(default_stage_selection);
+            Ok(SourceIdentity::Usd {
+                stage: arguments.asset.clone(),
+                prim_path: UsdPrimPath::from_str(prim_path)
+                    .map_err(|error| anyhow!("--object is not a valid USD prim path: {error}"))?,
+                selection,
+            })
+        }
+        Engine::Unity => {
+            let guid_string = arguments
+                .guid
+                .as_deref()
+                .ok_or_else(|| anyhow!("--guid is required for Unity conversion"))?;
+            let object_id_string = object.ok_or_else(|| {
+                anyhow!("--object is required for Unity conversion (Unity object id)")
+            })?;
+            let parsed_id: u64 = object_id_string.parse().map_err(|error| {
+                anyhow!("--object is not a valid Unity object id (expected u64): {error}")
+            })?;
+            Ok(SourceIdentity::Unity {
+                project_root: logical_project_root(&arguments.project)?,
+                asset_path: arguments.asset.clone(),
+                asset_guid: UnityAssetGuid::from_str(guid_string)
+                    .map_err(|error| anyhow!("--guid is not a valid Unity asset GUID: {error}"))?,
+                object_id: UnityObjectId::new(parsed_id),
+            })
+        }
+    }
+}
+
+fn build_conversion_context(arguments: &ConversionArgs) -> Result<ConversionContext> {
+    let profile_hash = ArtifactHash::from_bytes(arguments.profile.as_str().as_bytes());
+    Ok(ConversionContext::new(arguments.profile.clone(), profile_hash, env!("CARGO_PKG_VERSION"))?)
+}
+
+fn open_artifact_store(output: &std::path::Path) -> Result<AtomicArtifactStore> {
+    let logical = logical_output_root(output)?;
+    AtomicArtifactStore::new(output, logical)
+        .with_context(|| format!("could not open atomic artifact store at {}", output.display()))
+}
+
+fn default_stage_selection() -> StageSelection {
+    // "/" is the root selection; validate_selection accepts it. The expect is
+    // documented as genuinely unreachable because the StageSelection validator
+    // explicitly permits the "/" token.
+    StageSelection::from_str("/").unwrap_or_else(|error| {
+        #[expect(
+            clippy::expect_used,
+            reason = "'/' is the documented root selection; validator must accept it"
+        )]
+        let fallback =
+            StageSelection::from_str("/").expect("root stage selection '/' must always parse");
+        let _ = error;
+        fallback
     })
 }
 
@@ -499,6 +683,23 @@ fn logical_project_root(path: &std::path::Path) -> Result<ProjectRoot> {
         .context("project root basename is not a valid logical project identity")
 }
 
+fn logical_output_root(path: &std::path::Path) -> Result<OutputRoot> {
+    let name = path
+        .file_name()
+        .and_then(|component| component.to_str())
+        .filter(|component| !component.is_empty())
+        .unwrap_or("output");
+    name.parse::<OutputRoot>()
+        .context("output root basename is not a valid logical output identity")
+}
+
+fn parse_optional_non_empty_string(value: &str) -> Result<String, String> {
+    if value.trim().is_empty() {
+        return Err("value cannot be empty".to_owned());
+    }
+    Ok(value.to_owned())
+}
+
 fn parse_asset_path(value: &str) -> Result<SourceAssetPath, String> {
     value.parse::<SourceAssetPath>().map_err(|error| error.to_string())
 }
@@ -558,6 +759,22 @@ fn print_report(report: &CliReport, output_mode: OutputMode) {
             for fact in facts {
                 println!("fact: {fact}");
             }
+        }
+        CliReport::Plan { conversion_id, source, action, classification, reason, remediation }
+        | CliReport::Convert {
+            conversion_id,
+            source,
+            action,
+            classification,
+            reason,
+            remediation,
+        } => {
+            println!("conversion_id: {conversion_id}");
+            println!("source: {source}");
+            println!("action: {action}");
+            println!("classification: {classification}");
+            println!("reason: {reason}");
+            println!("remediation: {remediation}");
         }
         CliReport::Unavailable { command, capability, remediation } => {
             println!("command: {command}");

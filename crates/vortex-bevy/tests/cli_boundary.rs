@@ -214,6 +214,8 @@ fn valid_recovery_commands_return_explicit_typed_reports() -> Result<(), Box<dyn
                 "usd",
                 "--asset",
                 "Scenes/Fixture.usda",
+                "--object",
+                "/World",
                 "--profile",
                 "default",
                 "--output",
@@ -231,6 +233,10 @@ fn valid_recovery_commands_return_explicit_typed_reports() -> Result<(), Box<dyn
                 "unity",
                 "--asset",
                 "Assets/Fixture.prefab",
+                "--guid",
+                "0123456789abcdef0123456789abcdef",
+                "--object",
+                "1",
                 "--profile",
                 "default",
                 "--output",
@@ -248,6 +254,18 @@ fn valid_recovery_commands_return_explicit_typed_reports() -> Result<(), Box<dyn
             CliReport::Unavailable { command: actual, remediation, .. } => {
                 assert_eq!(actual, command);
                 assert!(!remediation.is_empty());
+            }
+            // After the orchestrator wiring landed, plan/convert return typed
+            // execution reports (Plan/Convert with a real conversion_id and
+            // classification) instead of Unavailable. Both report variants
+            // are valid for the recovery contract; this test asserts the
+            // shape, not the specific variant.
+            CliReport::Plan { source, classification, remediation, .. }
+            | CliReport::Convert { source, classification, remediation, .. } => {
+                assert!(!source.is_empty());
+                assert!(!classification.is_empty());
+                assert!(!remediation.is_empty());
+                let _ = command;
             }
             other => return Err(format!("unexpected report: {other:?}").into()),
         }

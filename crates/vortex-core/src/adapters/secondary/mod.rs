@@ -1,6 +1,7 @@
 //! Outbound adapters for source formats, subprocesses, storage, and artifact handling.
 
 pub mod artifact_store;
+pub mod conversion_pipeline;
 pub mod glb;
 pub mod godot_static_scene;
 pub mod linux_process_memory;

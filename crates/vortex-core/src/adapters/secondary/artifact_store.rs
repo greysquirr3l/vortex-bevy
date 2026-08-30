@@ -14,6 +14,7 @@ use crate::{
         command::{
             clean_output::OutputCleaner,
             execute_conversion::ArtifactStore,
+            plan_conversion::ExistingConversionReader,
             verify_artifacts::{ArtifactVerification, ArtifactVerifier},
         },
         query::conversion_report::ConversionReportReader,
@@ -341,10 +342,15 @@ impl ArtifactStore for AtomicArtifactStore {
     fn persist(&self, conversion: &ConversionAggregate) -> Result<(), Self::Error> {
         let _lock = self.acquire_lock(conversion.id())?;
         let directory = self.conversion_directory(conversion.id())?;
-        if directory.exists() {
-            return Ok(());
-        }
-        Err(ArtifactStoreError::IncompletePersistRequest)
+        fs::create_dir_all(&directory).map_err(|source| ArtifactStoreError::Io {
+            operation: "create conversion directory for persist",
+            path: directory.clone(),
+            source,
+        })?;
+        let report = serde_json::to_vec_pretty(conversion)
+            .map_err(|source| ArtifactStoreError::ReportSerialization { source })?;
+        write_file(&directory.join(REPORT_FILE), &report)?;
+        sync_directory(&directory)
     }
 }
 
@@ -396,6 +402,20 @@ impl ConversionReportReader for AtomicArtifactStore {
     }
 }
 
+impl ExistingConversionReader for AtomicArtifactStore {
+    type Error = ArtifactStoreError;
+
+    fn find_compatible(
+        &self,
+        id: &ConversionId,
+    ) -> Result<Option<ConversionAggregate>, Self::Error> {
+        // ConversionId is deterministically derived from (source, profile_hash), so the
+        // directory presence alone is the compatibility check: same source + same profile
+        // produces the same ID, and the serialized report carries both.
+        self.read(id)
+    }
+}
+
 #[derive(Debug)]
 struct PublicationLock {
     path: PathBuf,
@@ -434,10 +454,6 @@ pub enum ArtifactStoreError {
     ReportSerialization { source: serde_json::Error },
     #[error("conversion report deserialization failed: {source}")]
     ReportDeserialization { source: serde_json::Error },
-    #[error(
-        "the generic ArtifactStore port cannot publish bytes without a complete PublicationRequest"
-    )]
-    IncompletePersistRequest,
 }
 
 fn validate_relative_path(value: &str) -> Result<(), ArtifactStoreError> {
