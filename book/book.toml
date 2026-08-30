@@ -1,0 +1,44 @@
+[book]
+title = "Vortex-Bevy User Guide"
+description = "Authorized Unreal Engine and OpenUSD asset conversion to deterministic Bevy 0.19 runtime artifacts."
+authors = ["Nick Campbell"]
+language = "en"
+src = "src"
+
+[build]
+build-dir = "build"
+create-missing = true
+
+[output.html]
+default-theme = "light"
+preferred-dark-theme = "navy"
+git-repository-url = "https://github.com/greysquirr3l/vortex-bevy"
+edit-url-template = "https://github.com/greysquirr3l/vortex-bevy/edit/main/book/{path}"
+site-url = "/vortex-bevy/"
+no-section-label = false
+mathjax-support = false
+additional-css = []
+additional-js = []
+
+[output.html.fold]
+enable = true
+level = 1
+
+[output.html.playground]
+editable = false
+copyable = true
+copy-js = true
+
+[output.html.search]
+enable = true
+limit-results = 30
+teaser-word-count = 30
+use-boolean-and = true
+boost-title = 2
+boost-hierarchy = 1
+boost-paragraph = 1
+expand = true
+heading-split-level = 3
+
+[preprocessor.links]
+renderers = ["html"]

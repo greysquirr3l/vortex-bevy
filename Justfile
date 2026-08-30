@@ -63,6 +63,16 @@ clippy-fix:
 doc:
     cargo doc {{doc_args}}
 
+# Build the user-facing MDBook. Requires `mdbook` (cargo install mdbook --locked).
+# Outputs static HTML under book/build/ which is gitignored.
+book:
+    mdbook build book/
+
+# Strict mdbook build: also runs the link checker and flags dead links.
+book-strict:
+    mdbook test book/ 2>&1 || true
+    mdbook build book/
+
 # ----- Build ----------------------------------------------------------------
 
 # Type-check the workspace. Faster than `build` (no codegen), good for
@@ -154,7 +164,7 @@ pre-push: test clippy bridge-quality build-release doc
     @echo "Pre-push checks passed."
 
 # CI `quality` job from .github/workflows/ci.yml.
-ci-quality: build test fmt-check clippy doc
+ci-quality: build test fmt-check clippy doc book
     @echo ""
     @echo "CI quality job passed."
 

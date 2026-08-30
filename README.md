@@ -95,6 +95,16 @@ bash scripts/check-release-readiness.sh
 
 The Wiggum implementation plan is `plan.toml`. Generated task state is maintained in `PROGRESS.md`; do not edit generated task filenames by hand without regenerating the scaffold.
 
+## User guide
+
+The user-focused MDBook lives under [`book/`](book/src/SUMMARY.md) and
+covers install, build, the end-to-end USD tutorial, per-engine
+classification outcomes, the CLI flag reference, the scene manifest
+schema, the security and architecture explanations, and the
+performance baseline. Build it locally with `mdbook build book/`
+(requires `cargo install mdbook --locked`) or read it on the
+project site.
+
 ## Authorized Editor bridges
 
 The repository provides isolated Unreal Python, Unity Editor C#, and Godot headless GDScript bridges in [`bridges/`](bridges/README.md). They only process caller-selected assets from authorized editable projects, confine all reports and staged files to a caller-provided root, and emit the versioned `vortex.editor-bridge/v1` contract. The bridge quality gate applies strict Python, C#, and GDScript formatting/linting plus deterministic contract tests without requiring any Editor in normal CI. Actual Editor execution remains opt-in and requires the matching authorized project and Editor version.

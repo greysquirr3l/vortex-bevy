@@ -37,4 +37,15 @@ run_documented_cli_examples() {
 check_local_links
 run_documented_cli_examples
 cargo doc --workspace --no-deps
+
+if command -v mdbook >/dev/null 2>&1; then
+  mdbook build book/
+  if ! mdbook test book/; then
+    printf 'mdbook test reported failures.\n' >&2
+    exit 1
+  fi
+else
+  printf 'mdbook not installed; skipping user-guide build (cargo install mdbook --locked).\n' >&2
+fi
+
 printf '%s\n' 'Documentation contract passed.'
