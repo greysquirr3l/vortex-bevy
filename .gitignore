@@ -1,5 +1,6 @@
 # Rust
 /target/
+/**/target/
 **/*.rs.bk
 
 # mdbook user guide build artifacts
@@ -19,6 +20,14 @@
 /plan.toml
 /features.json
 /tasks/
+
+# Local IDE / agent / tool state. Not part of the project; user-specific.
+# Tests and build never read from these.
+.coraline/
+.vscode/
+.claude/
+/.mcp.json
+/.config/dotnet-tools.json
 
 # Local environment and secrets
 .env
