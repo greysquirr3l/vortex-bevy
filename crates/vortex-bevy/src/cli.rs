@@ -555,16 +555,37 @@ fn unavailable_view(arguments: &ViewArgs) -> Result<CliReport> {
         query.iter(app.world()).count()
     };
     if window_count == 0 {
-        eprintln!(
+        let reason = format!(
             "vortex-bevy: viewer exited without creating a native window. \
-             This typically means the winit event loop did not find a GUI session \
-             (e.g., the binary was launched from a non-foreground process context, \
-             or the host's display server is unreachable). The published \
-             conversion is intact at {} and can be inspected with `vortex-bevy \
-             verify --conversion-id {}`.",
+             On macOS 26 (Tahoe) winit 0.30.13 (transitively pinned by Bevy 0.19) \
+             calls -[NSApplication run] which returns immediately on hosts \
+             without an explicit foreground GUI session, so no native window \
+             is created. The fix is tracked upstream in winit 0.31 and bevy 0.20; \
+             neither is stable yet. Until they ship, the native viewer window \
+             is unavailable on macOS 26 -- the conversion, manifest, and \
+             atomic publication remain intact and can be inspected at {} \
+             with `vortex-bevy verify --conversion-id {}`.",
             arguments.artifact_root.display(),
             latest
         );
+        eprintln!("{reason}");
+
+        return Ok(CliReport::Convert {
+            conversion_id: latest.as_str().to_owned(),
+            source: "<artifact-root>".to_owned(),
+            action: "executed".to_owned(),
+            classification: "converted".to_owned(),
+            reason,
+            remediation: format!(
+                "Native viewer window unavailable on macOS 26 until winit 0.31 \
+                 and bevy 0.20 ship. Use `vortex-bevy verify --conversion-id {} \
+                 --artifact-root {}` to inspect the published GLB + manifest, \
+                 or run the binary on Linux / Windows / macOS <= 15 to see the \
+                 native viewer window.",
+                latest,
+                arguments.artifact_root.display(),
+            ),
+        });
     }
 
     Ok(CliReport::Convert {

@@ -284,10 +284,10 @@ fn validate_godot_resource_path(value: &str, kind: &'static str) -> Result<(), I
 }
 
 fn validate_selection(value: &str, kind: &'static str) -> Result<(), IdentityError> {
-    if value.is_empty() {
-        return Err(IdentityError::Empty { kind });
-    }
-
+    // An empty selection is the documented default: it asks the stage
+    // to fall back to the root layer with no overrides. The CLI exposes
+    // this via `default_stage_selection`, so the validator must accept
+    // it instead of rejecting it as Empty.
     if value.contains('\0') || value.contains('\n') || value.contains('\r') {
         return Err(IdentityError::Invalid { kind, value: value.to_owned() });
     }
