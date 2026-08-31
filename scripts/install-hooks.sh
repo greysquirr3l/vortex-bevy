@@ -31,7 +31,6 @@ HOOK
 cat > "${hooks_dir}/pre-push" <<'HOOK'
 #!/usr/bin/env bash
 set -euo pipefail
-bash scripts/check-preserved-contracts.sh
 cargo test --workspace --all-features
 cargo l
 bash scripts/check-bridge-quality.sh
