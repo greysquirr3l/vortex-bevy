@@ -124,6 +124,67 @@ pub fn build_runtime_app(asset_root: impl Into<String>) -> App {
     app
 }
 
+/// Builds the GUI Bevy 0.19 application used by the `view` CLI command.
+///
+/// Unlike [`build_runtime_app`], this constructor does **not** call
+/// `finish()` or `cleanup()` ahead of time. Bevy 0.19's
+/// `bevy_pbr::EnvironmentMapGenerationPlugin::finish` hook adds a sub-plugin
+/// during `finish()`, which would panic if `finish()` had already been
+/// called. The CLI's `view` dispatch builds this variant and then calls
+/// [`App::run`], which performs `finish()` and `cleanup()` once on the way
+/// into the event loop in the correct order.
+#[must_use = "the Bevy App must be driven via App::run or App::update to enter the event loop"]
+pub fn build_viewer_app(asset_root: impl Into<String>) -> App {
+    let mut app = App::new();
+    app.add_plugins(
+        DefaultPlugins.set(AssetPlugin { file_path: asset_root.into(), ..Default::default() }).set(
+            WindowPlugin {
+                primary_window: Some(Window {
+                    title: "Vortex-Bevy Viewer".to_owned(),
+                    resolution: WindowResolution::new(1_440, 900),
+                    resizable: true,
+                    ..Default::default()
+                }),
+                ..Default::default()
+            },
+        ),
+    );
+    app.register_type::<Transform>();
+    app.register_type::<GlobalTransform>();
+    app.register_type::<TransformTreeChanged>();
+    app.register_type::<Visibility>();
+    app.register_type::<InheritedVisibility>();
+    app.register_type::<ViewVisibility>();
+    app.register_type::<VisibleEntities>();
+    app.register_type::<CubemapVisibleEntities>();
+    app.register_type::<CascadesVisibleEntities>();
+    app.register_type::<ChildOf>();
+    app.register_type::<Children>();
+    app.register_type::<Name>();
+    app.register_type::<Mesh3d>();
+    app.register_type::<Aabb>();
+    app.register_type::<Frustum>();
+    app.register_type::<CubemapFrusta>();
+    app.register_type::<GltfMeshName>();
+    app.register_type::<GltfMaterialName>();
+    app.register_type::<GltfSceneName>();
+    app.register_type::<MeshMaterial3d<StandardMaterial>>();
+    app.register_type::<Camera>();
+    app.register_type::<CameraMainTextureUsages>();
+    app.register_type::<Projection>();
+    app.register_type::<Camera3d>();
+    app.register_type::<PointLight>();
+    app.register_type::<DirectionalLight>();
+    app.register_type::<Cascades>();
+    app.register_type::<CascadesFrusta>();
+    app.register_type::<CascadeShadowConfig>();
+    app.register_type::<SpotLight>();
+    app.add_plugins(EguiPlugin::default());
+    app.add_plugins(VortexDesktopViewerPlugin);
+    app.add_plugins(VortexViewerPlugin);
+    app
+}
+
 /// Loads a complete atomically published conversion only after its manifest and every declared
 /// artifact have verified beneath the configured output root.
 ///

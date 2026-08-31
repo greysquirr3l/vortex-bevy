@@ -7,7 +7,7 @@
 use std::{ffi::OsString, path::PathBuf, process::ExitCode, str::FromStr};
 
 use crate::runtime::{
-    VortexRuntimeDiagnostic, build_runtime_app, load_published_conversion_or_diagnostic,
+    VortexRuntimeDiagnostic, build_viewer_app, load_published_conversion_or_diagnostic,
 };
 use anyhow::{Context, Result, anyhow};
 use clap::{Args, Parser, Subcommand, ValueEnum};
@@ -513,7 +513,7 @@ fn unavailable_view(arguments: &ViewArgs) -> Result<CliReport> {
         });
     };
 
-    let mut app = build_runtime_app(arguments.artifact_root.to_string_lossy().into_owned());
+    let mut app = build_viewer_app(arguments.artifact_root.to_string_lossy().into_owned());
     let diagnostic_entity = load_published_conversion_or_diagnostic(&mut app, &store, &latest);
     if app.world().entity(diagnostic_entity).get::<VortexRuntimeDiagnostic>().is_some() {
         // Artifact failed to load. Run a short tick loop so the diagnostic
@@ -542,10 +542,30 @@ fn unavailable_view(arguments: &ViewArgs) -> Result<CliReport> {
     );
     println!("opening Bevy viewer; close the window to exit");
 
-    // Enter the Bevy event loop. App::run() blocks until the window closes.
-    // Bevy 0.19's DefaultPlugins open a native window via winit; the runtime
-    // owns the event loop and tears down cleanly on window close.
+    // Enter the Bevy event loop. App::run() blocks until the window closes;
+    // on macOS the winit event loop only stays open when the process has a
+    // foreground GUI session. If winit cannot open a window, App::run
+    // returns AppExit::Success immediately. We probe for the primary window
+    // and surface a typed diagnostic if no window was created.
     app.run();
+
+    // Diagnostic: did winit actually create a window?
+    let window_count = {
+        let mut query = app.world_mut().query::<&bevy::window::Window>();
+        query.iter(app.world()).count()
+    };
+    if window_count == 0 {
+        eprintln!(
+            "vortex-bevy: viewer exited without creating a native window. \
+             This typically means the winit event loop did not find a GUI session \
+             (e.g., the binary was launched from a non-foreground process context, \
+             or the host's display server is unreachable). The published \
+             conversion is intact at {} and can be inspected with `vortex-bevy \
+             verify --conversion-id {}`.",
+            arguments.artifact_root.display(),
+            latest
+        );
+    }
 
     Ok(CliReport::Convert {
         conversion_id: latest.as_str().to_owned(),
