@@ -42,6 +42,7 @@
 # Local conversion outputs and logs
 /artifacts/
 /output/
+/**/output/
 /staging/
 *.log
 
