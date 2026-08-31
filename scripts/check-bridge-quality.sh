@@ -31,15 +31,26 @@ command_present() {
 
 require_command ruff
 require_command pytest
-require_command gdlint
-require_command gdformat
 
 ruff check --config "${bridge_root}/ruff.toml" "${bridge_root}/unreal" "${bridge_root}/tests"
 ruff format --check "${bridge_root}/unreal" "${bridge_root}/tests"
 pytest "${bridge_root}/tests"
-gdlint "${godot_bridge}"
-gdformat --check "${godot_bridge}"
 reject_markers
+
+# Optional: Godot bridge lint + format via gdtoolkit (gdlint, gdformat).
+# The toolchain is host-specific (pip install gdtoolkit) and not every
+# contributor has Python tooling on PATH. When absent, surface a warning
+# and skip so the pre-push hook does not wedge local development.
+run_godot_lint() {
+  if ! command_present gdlint || ! command_present gdformat; then
+    printf 'gdlint/gdformat not installed; skipping Godot bridge lint/format. Restore via `pip install gdtoolkit` once.\n' >&2
+    return 0
+  fi
+  gdlint "${godot_bridge}"
+  gdformat --check "${godot_bridge}"
+}
+
+run_godot_lint
 
 # Optional: Unity C# lint + build via dotnet-csharpier. The Unity bridge
 # tooling is host-specific (requires the .NET SDK plus the pinned
