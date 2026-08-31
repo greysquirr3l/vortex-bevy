@@ -516,14 +516,37 @@ fn unavailable_view(arguments: &ViewArgs) -> Result<CliReport> {
     let mut app = build_runtime_app(arguments.artifact_root.to_string_lossy().into_owned());
     let diagnostic_entity = load_published_conversion_or_diagnostic(&mut app, &store, &latest);
     if app.world().entity(diagnostic_entity).get::<VortexRuntimeDiagnostic>().is_some() {
-        // Artifact failed to load. Run a short tick loop, print the diagnostic, exit.
+        // Artifact failed to load. Run a short tick loop so the diagnostic
+        // components settle, print the diagnostic code + message, and exit.
         for _ in 0..8 {
             app.update();
+        }
+        if let Some(diag) = app.world().entity(diagnostic_entity).get::<VortexRuntimeDiagnostic>() {
+            return Err(anyhow!(
+                "view failed for conversion {latest}: {} ({}); see runtime diagnostic entity {}",
+                diag.message,
+                diag.code,
+                diagnostic_entity
+            ));
         }
         return Err(anyhow!(
             "view failed for conversion {latest}; see runtime diagnostic entity {diagnostic_entity}"
         ));
     }
+
+    // Print the typed report on stdout before entering the event loop so
+    // operators see the load result even when the window is the focus.
+    println!(
+        "loaded conversion_id: {}\nsource: <artifact-root>\naction: executed\nclassification: converted",
+        latest.as_str()
+    );
+    println!("opening Bevy viewer; close the window to exit");
+
+    // Enter the Bevy event loop. App::run() blocks until the window closes.
+    // Bevy 0.19's DefaultPlugins open a native window via winit; the runtime
+    // owns the event loop and tears down cleanly on window close.
+    app.run();
+
     Ok(CliReport::Convert {
         conversion_id: latest.as_str().to_owned(),
         source: "<artifact-root>".to_owned(),
@@ -532,7 +555,7 @@ fn unavailable_view(arguments: &ViewArgs) -> Result<CliReport> {
         reason: "published conversion loaded; viewer opened in Bevy window".to_owned(),
         remediation:
             "Press F (or use the Frame toolbar action) to fit the camera; right-drag to orbit; \
-             middle-drag to pan; wheel to zoom. Quit the window to exit."
+             middle-drag to pan; wheel to zoom. Close the window to exit."
                 .to_owned(),
     })
 }
