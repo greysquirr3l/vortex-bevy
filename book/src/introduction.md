@@ -13,6 +13,11 @@ installation and your first conversion in under ten minutes. The
 USD conversion. The [How-to](./how-to/inspect-unreal.md) section covers
 specific tasks like inspecting an asset or opening the Bevy viewer.
 
+The latest published version of this guide is rendered at
+<https://greysquirr3l.github.io/vortex-bevy/> by the
+[Deploy book](../../.github/workflows/book.yml) workflow on every push
+to `main` that touches `book/`.
+
 For contract-level detail — manifest schema fields, the full CLI flag
 matrix, supported capabilities — see the
 [Reference](./reference/cli.md) section.

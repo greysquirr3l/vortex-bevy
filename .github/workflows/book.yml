@@ -1,0 +1,71 @@
+name: Deploy book
+
+# Deploys the MDBook user guide to GitHub Pages on every push to main
+# that touches book/ content. Triggers can also be invoked manually via
+# the Actions tab (workflow_dispatch).
+on:
+  push:
+    branches: [main]
+    paths:
+      - "book/**"
+      - ".github/workflows/book.yml"
+  workflow_dispatch:
+
+# Avoid overlapping deployments; keep the in-flight run alive to finish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+# Pages deployment needs write access to Pages and an OIDC token for the
+# official deploy-pages action. The deployment URL is captured from the
+# deploy step and exposed via the job's `environment.url`.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    name: Build and deploy book
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install mdbook
+        # Pinned version matches the local install documented in the book.
+        # `cargo install --locked` honors Cargo.lock so the dependency graph
+        # is reproducible across CI runs.
+        shell: bash
+        run: |
+          if ! command -v mdbook >/dev/null 2>&1; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --profile minimal
+            echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+            cargo install mdbook --locked --version 0.5.4
+          fi
+
+      - name: Build book
+        # Static HTML is emitted under book/build/. Gitignored.
+        shell: bash
+        run: mdbook build book/
+
+      - name: Verify mdbook test
+        # Catches broken intra-doc links and missing examples that build alone
+        # would skip. Failures here fail the deployment.
+        shell: bash
+        run: mdbook test book/
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./book/build
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

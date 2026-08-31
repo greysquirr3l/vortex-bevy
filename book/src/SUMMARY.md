@@ -45,6 +45,7 @@
 - [Architecture overview](./explanation/architecture.md)
 - [Security model](./explanation/security.md)
 - [Performance and observability](./explanation/performance.md)
+- [How the book is published](./explanation/deployment.md)
 
 ---
 
