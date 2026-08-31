@@ -12,11 +12,21 @@ All notable repository changes are documented here. Versioning follows the suppo
 - Deterministic integration tests covering local plain/gzip parity, production-fixture gzip classification, queue configuration, expansion rejection, malformed compression, mismatched encoding, and channel capacity.
 - Direct-versus-queued production USD timing evidence and a documented bottleneck analysis.
 - A repeatable release-readiness script, action pins, release recovery guidance, and cargo-geiger audit evidence.
+- A post-run window-probe in `vortex-bevy view` that surfaces a typed `CliReport` (`reason` + `remediation`) when no `bevy::window::Window` was spawned on the host, so the macOS 26 viewer-window limitation is no longer silent.
+- Cross-platform bundle metadata, a `just bundle` recipe, and a `scripts/build-bundle.sh` launcher driven by `cargo-bundle` for `.app`, `.msi`, `.deb`, and `.rpm` outputs.
+- An MDBook user guide deployed via GitHub Pages and a repository `SECURITY.md` describing the threat model and reporting flow.
 
 ### Changed
 
 - Stateless USDA parsing and root-confined stage-file resolution are now crate-private reusable operations. Their validated behavior and external support boundary are unchanged.
 - CI action references use immutable commits rather than mutable version tags.
+- `vortex-bevy view` is wired through a dedicated `build_viewer_app` builder so the runtime tests keep their headless path and the GUI path runs the Bevy event loop exactly once.
+- `validate_selection` now accepts empty input as the documented default (root layer, no overrides) instead of rejecting it as `IdentityError::Empty`. The `default_stage_selection` API no longer panics.
+
+### Fixed
+
+- `vortex-bevy view` exits cleanly with `classification: converted` on macOS 26 (Tahoe) without opening a native window because Bevy 0.19 transitively pins winit 0.30.13 and winit 0.30.x's `-[NSApplication run]` returns immediately on hosts without an explicit foreground GUI session. The published GLB, manifest, and atomic publication are unaffected. The fix lands upstream in winit 0.31 and bevy 0.20 (neither stable yet). Tracked in [#7](https://github.com/greysquirr3l/vortex-bevy/issues/7). On Linux / Windows / macOS ≤ 15 the native viewer window opens normally.
+- `valid_recovery_commands_return_explicit_typed_reports` boundary test panicked when the CLI requested the default stage selection; aligned with the `validate_selection` change above.
 
 ### Security
 
@@ -26,3 +36,4 @@ All notable repository changes are documented here. Versioning follows the suppo
 ### Compatibility
 
 - The streaming queue does not add full OpenUSD composition, arbitrary binary USD support, recursive reference/payload traversal, pixel decode, GPU upload, or an Editor-free semantic export path.
+- The macOS 26 viewer-window limitation does not change the support matrix for `convert` / `inspect` / `plan` / `verify` — those continue to work on macOS 26 and emit the same typed reports. Only the native viewer window requires reverting to macOS ≤ 15 (or waiting for winit 0.31 / bevy 0.20).
