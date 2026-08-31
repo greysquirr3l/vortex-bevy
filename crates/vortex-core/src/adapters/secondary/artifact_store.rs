@@ -196,6 +196,41 @@ impl AtomicArtifactStore {
         confined_join(&directory, MANIFEST_FILE)
     }
 
+    /// Lists published conversion IDs beneath the configured root.
+    ///
+    /// Returns lexically sorted IDs for every subdirectory that contains the
+    /// `scene.manifest.ron` sidecar. Unknown entries (no manifest) are
+    /// silently skipped — they are treated as partial leftovers, not
+    /// loadable conversions. Returns an empty vector if the root has no
+    /// published conversions yet.
+    pub fn list_published_conversions(&self) -> Result<Vec<ConversionId>, ArtifactStoreError> {
+        let mut ids = Vec::new();
+        for entry in fs::read_dir(&self.root).map_err(|source| ArtifactStoreError::Io {
+            operation: "read artifact root for listing",
+            path: self.root.clone(),
+            source,
+        })? {
+            let entry = entry.map_err(|source| ArtifactStoreError::Io {
+                operation: "read artifact root entry",
+                path: self.root.clone(),
+                source,
+            })?;
+            let name = entry.file_name();
+            let name_str = name.to_string_lossy().into_owned();
+            let Ok(id) = ConversionId::parse(&name_str) else {
+                continue;
+            };
+            let Ok(manifest_path) = self.published_manifest_path(&id) else {
+                continue;
+            };
+            if manifest_path.is_file() {
+                ids.push(id);
+            }
+        }
+        ids.sort();
+        Ok(ids)
+    }
+
     /// Verifies all hashes declared by one published scene manifest.
     ///
     /// # Errors

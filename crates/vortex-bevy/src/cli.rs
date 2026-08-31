@@ -6,6 +6,9 @@
 
 use std::{ffi::OsString, path::PathBuf, process::ExitCode, str::FromStr};
 
+use crate::runtime::{
+    VortexRuntimeDiagnostic, build_runtime_app, load_published_conversion_or_diagnostic,
+};
 use anyhow::{Context, Result, anyhow};
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use serde::Serialize;
@@ -459,16 +462,15 @@ fn open_artifact_store(output: &std::path::Path) -> Result<AtomicArtifactStore> 
 }
 
 fn default_stage_selection() -> StageSelection {
-    // "/" is the root selection; validate_selection accepts it. The expect is
-    // documented as genuinely unreachable because the StageSelection validator
-    // explicitly permits the "/" token.
-    StageSelection::from_str("/").unwrap_or_else(|error| {
+    // Empty selection is valid (selects the root layer with default options).
+    // StageSelection's validator accepts an empty input as "all defaults".
+    StageSelection::from_str("").unwrap_or_else(|error| {
         #[expect(
             clippy::expect_used,
-            reason = "'/' is the documented root selection; validator must accept it"
+            reason = "empty stage selection is the documented default; validator must accept it"
         )]
         let fallback =
-            StageSelection::from_str("/").expect("root stage selection '/' must always parse");
+            StageSelection::from_str("").expect("empty stage selection must always parse");
         let _ = error;
         fallback
     })
@@ -494,11 +496,43 @@ fn unavailable_view(arguments: &ViewArgs) -> Result<CliReport> {
     if arguments.artifact_root.as_os_str().is_empty() {
         return Err(anyhow!("--artifact-root cannot be empty"));
     }
-    Ok(CliReport::Unavailable {
-        command: "view".to_owned(),
-        capability: "artifact discovery".to_owned(),
+    let logical = logical_output_root(&arguments.artifact_root)?;
+    let store = AtomicArtifactStore::new(&arguments.artifact_root, logical).with_context(|| {
+        format!("could not open artifact store at {}", arguments.artifact_root.display())
+    })?;
+    let conversions = store.list_published_conversions().with_context(|| {
+        format!("could not enumerate conversions under {}", arguments.artifact_root.display())
+    })?;
+    let Some(latest) = conversions.last().cloned() else {
+        return Ok(CliReport::Unavailable {
+            command: "view".to_owned(),
+            capability: "published conversion discovery".to_owned(),
+            remediation: "No published conversions found under --artifact-root. Run \
+                 `vortex-bevy convert --project <project> --engine <engine> ...` first."
+                .to_owned(),
+        });
+    };
+
+    let mut app = build_runtime_app(arguments.artifact_root.to_string_lossy().into_owned());
+    let diagnostic_entity = load_published_conversion_or_diagnostic(&mut app, &store, &latest);
+    if app.world().entity(diagnostic_entity).get::<VortexRuntimeDiagnostic>().is_some() {
+        // Artifact failed to load. Run a short tick loop, print the diagnostic, exit.
+        for _ in 0..8 {
+            app.update();
+        }
+        return Err(anyhow!(
+            "view failed for conversion {latest}; see runtime diagnostic entity {diagnostic_entity}"
+        ));
+    }
+    Ok(CliReport::Convert {
+        conversion_id: latest.as_str().to_owned(),
+        source: "<artifact-root>".to_owned(),
+        action: "executed".to_owned(),
+        classification: "converted".to_owned(),
+        reason: "published conversion loaded; viewer opened in Bevy window".to_owned(),
         remediation:
-            "Pass a verified published artifact root after recovery completes publication."
+            "Press F (or use the Frame toolbar action) to fit the camera; right-drag to orbit; \
+             middle-drag to pan; wheel to zoom. Quit the window to exit."
                 .to_owned(),
     })
 }

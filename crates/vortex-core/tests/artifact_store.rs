@@ -17,9 +17,9 @@ use vortex_core::{
     },
     domain::{
         ArtifactHash, ArtifactKind, ArtifactRecord, ClassificationKind, CompatibilityRequirements,
-        ConversionAggregate, ConversionClassification, ConversionContext, DiagnosticCode,
-        ManifestArtifact, ManifestArtifactKind, ManifestSource, OutputRoot, ProjectRoot,
-        Remediation, SceneManifest, SourceAssetPath, SourceIdentity, UnrealObjectPath,
+        ConversionAggregate, ConversionClassification, ConversionContext, ConversionId,
+        DiagnosticCode, ManifestArtifact, ManifestArtifactKind, ManifestSource, OutputRoot,
+        ProjectRoot, Remediation, SceneManifest, SourceAssetPath, SourceIdentity, UnrealObjectPath,
     },
 };
 
@@ -175,5 +175,44 @@ fn malformed_report_is_not_returned_as_a_valid_conversion() -> Result<(), Box<dy
 fn diagnostic_code_fixture_remains_typed() -> Result<(), Box<dyn Error>> {
     let code = DiagnosticCode::parse("artifact.verified")?;
     assert_eq!(code.as_str(), "artifact.verified");
+    Ok(())
+}
+
+#[test]
+fn list_published_conversions_enumerates_only_directories_with_a_manifest()
+-> Result<(), Box<dyn Error>> {
+    let root = root("list")?;
+    let store = store(&root)?;
+
+    // Empty root returns an empty list.
+    assert!(store.list_published_conversions()?.is_empty());
+
+    // Publish one conversion and verify it appears.
+    let request = request()?;
+    let id = request.conversion.id().clone();
+    assert_eq!(store.publish(&request)?, PublicationOutcome::Published);
+    let listed = store.list_published_conversions()?;
+    assert_eq!(listed, vec![id.clone()]);
+
+    // Foreign directories (no manifest sidecar) are skipped, not errored.
+    let foreign = "not-a-real-conversion";
+    fs::create_dir_all(root.join(foreign))?;
+    let after_foreign = store.list_published_conversions()?;
+    assert_eq!(after_foreign, vec![id.clone()]);
+
+    // A non-64-char directory name fails to parse and is skipped.
+    let short = "short";
+    fs::create_dir_all(root.join(short))?;
+    let after_short = store.list_published_conversions()?;
+    assert_eq!(after_short, vec![id.clone()]);
+
+    // ConversionId::parse round-trips through a hex string and rejects
+    // non-hex or wrong-length input.
+    assert_eq!(ConversionId::parse(id.as_str())?.as_str(), id.as_str());
+    assert!(ConversionId::parse("not-hex").is_err());
+    assert!(ConversionId::parse(&"f".repeat(63)).is_err());
+    assert!(ConversionId::parse(&"g".repeat(64)).is_err());
+
+    fs::remove_dir_all(root)?;
     Ok(())
 }

@@ -198,6 +198,18 @@ impl ConversionId {
         Self(format!("{digest:x}"))
     }
 
+    /// Parses a conversion id from its hex string form. Accepts any 64-character
+    /// lowercase hex string. Used by the artifact store to enumerate
+    /// published conversion directories.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`IdentityError::InvalidHash`] if the input is not exactly 64
+    /// lowercase hex characters.
+    pub fn parse(value: &str) -> Result<Self, IdentityError> {
+        ArtifactHash::from_str(value).map(|_| Self(value.to_owned()))
+    }
+
     #[must_use]
     pub fn as_str(&self) -> &str {
         &self.0
