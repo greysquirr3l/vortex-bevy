@@ -1,6 +1,7 @@
 # Rust
 /target/
 /**/target/
+/**/bundle/
 **/*.rs.bk
 
 # mdbook user guide build artifacts

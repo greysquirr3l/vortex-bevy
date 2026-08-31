@@ -151,6 +151,22 @@ run *args:
 
 # ----- Composite workflows --------------------------------------------------
 
+# Cross-platform application bundle. Produces an OS-native installer that
+# grants a foreground GUI session to the Bevy viewer window (AppKit on
+# macOS, SxS manifest on Windows, .desktop + icon on Linux).
+#
+# Requires: cargo install cargo-bundle --locked
+# Outputs (one per platform):
+#   - macOS:   target/release/bundle/osx/Vortex-Bevy.app
+#   - Windows: target/release/bundle/windows/  (MSI + bundled .exe + SxS manifest)
+#   - Linux:   target/release/bundle/{deb,rpm,appimage}/
+#
+# Each bundle wraps target/release/vortex-bevy with the platform-specific
+# metadata in crates/vortex-bevy/Cargo.toml ([package.metadata.bundle]).
+bundle:
+    cargo build --release --bin vortex-bevy -p vortex-bevy
+    cargo bundle --release --bin vortex-bevy -p vortex-bevy
+
 # AGENTS.md preflight. Required to pass before any commit. Mirrors the exact
 # command list documented in AGENTS.md.
 preflight: build test fmt-check clippy deny audit

@@ -23,6 +23,7 @@
 - [Inspect an Unreal asset](./how-to/inspect-unreal.md)
 - [Convert an authorized source](./how-to/convert.md)
 - [View a published conversion](./how-to/view.md)
+- [Build a platform bundle](./how-to/bundle.md)
 - [Inspect the support matrix](./how-to/support-matrix.md)
 - [Understand classification outcomes](./how-to/classification-outcomes.md)
 - [Troubleshoot conversion failures](./how-to/troubleshoot.md)

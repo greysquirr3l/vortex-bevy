@@ -26,5 +26,36 @@ criterion.workspace = true
 name = "runtime_spawn"
 harness = false
 
+# Cross-platform bundle metadata consumed by `cargo bundle --release`.
+# Produces:
+#   - macOS:   target/release/bundle/osx/Vortex-Bevy.app
+#   - Windows: target/release/bundle/windows/Vortex-Bevy.msi   (.exe in the bundle/)
+#   - Linux:   target/release/bundle/deb/vortex-bevy_*.deb    (and .rpm where applicable)
+# Icon and PNG metadata are sourced from assets/bundle/ when present.
+[package.metadata.bundle]
+name = "Vortex-Bevy"
+version = "0.1.0"
+identifier = "dev.greysquirr3l.vortex-bevy"
+category = "DeveloperTool"
+short_description = "Authorized Unreal Engine and OpenUSD asset conversion to deterministic Bevy 0.19 runtime artifacts."
+long_description = "Vortex-Bevy is an offline CLI plus an optional Bevy 0.19 desktop viewer for authorized Unreal Engine source-project assets, Unity URP static scenes, and selected OpenUSD stages."
+homepage = "https://github.com/greysquirr3l/vortex-bevy"
+publisher = "Nick Campbell"
+license = "MIT OR Apache-2.0"
+# Default CLI binary is the same one Cargo builds. Bundle wraps it with the
+# platform-specific metadata above.
+binaries = [
+    { name = "vortex-bevy", path = "target/release/vortex-bevy" },
+]
+# macOS-specific
+osx_frameworks = []
+osx_minimum_system_version = "11.0"
+osx_entitlements = ""
+# Windows-specific: declare the binary so cargo-bundle packages the .exe + SxS manifest
+windows_icon_path = ""
+# Linux-specific
+linux_deb_depends = "libc6"
+linux_rpm_depends = "glibc"
+
 [lints]
 workspace = true

@@ -108,6 +108,9 @@ a conservative radius.
 
 ## Going further
 
+- [Build a platform bundle](./bundle.md) — wraps the binary in a
+  platform-native `.app` / MSI / `.deb` so AppKit / win32 / X11 grant
+  the foreground GUI session the winit window needs.
 - [Reference: Bevy runtime loading contract](../../docs/bevy_runtime_loading_contract.md)
 - [Reference: bevy_egui viewer contract](../../docs/bevy_egui_viewer_contract.md)
 - [Reference: Runtime scene lifecycle contract](../../docs/runtime_scene_lifecycle_contract.md)
