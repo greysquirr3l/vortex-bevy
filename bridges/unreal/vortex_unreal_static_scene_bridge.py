@@ -335,7 +335,7 @@ def _scene_records(request: ScenarioRequest) -> list[dict[str, Any]]:
             RecordDetails(
                 warnings=(
                     "Material-instance parameters are reported explicitly; arbitrary Unreal "
-                    "material graphs are outside the portable subset.",
+                    "material graphs are outside the portable subset."
                 ),
             ),
         ),
@@ -347,7 +347,7 @@ def _scene_records(request: ScenarioRequest) -> list[dict[str, Any]]:
             RecordDetails(
                 warnings=(
                     "Static level actor placement is evidence-only in bridge v1; full world "
-                    "conversion requires a dedicated scene adapter.",
+                    "conversion requires a dedicated scene adapter."
                 ),
             ),
         ),

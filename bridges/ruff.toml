@@ -5,6 +5,9 @@ line-length = 100
 select = ["ALL"]
 ignore = [
   "COM812", # The formatter owns trailing-comma layout.
+  "CPY001", # Copyright header is not the project convention; files use a
+             # descriptive one-line preamble that ruff's CPY001 misclassifies
+  # as a missing header. Project convention matches the existing C# bridge.
   "D203",   # One blank line before class declarations is handled by D211.
   "D213",   # Summary placement follows the D212 convention.
 ]
