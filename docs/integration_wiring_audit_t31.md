@@ -1,4 +1,4 @@
-# T31 — Integration Wiring Audit
+# Integration Wiring Audit
 
 **Status:** Complete — no critical or high-severity findings. Project is wired
 end-to-end for the implemented surface; gaps are explicit and reported by the
@@ -249,24 +249,25 @@ only meaningful for USD, `--output` non-empty, `--conversion-id` non-empty.
 
 ---
 
-## Cross-reference with T30 findings
+## Cross-reference with the security audit
 
-Wiring audit is orthogonal to the security audit. Notable shared points:
+Wiring audit is orthogonal to the security audit (see
+`docs/security_audit_t30.md`). Notable shared points:
 
-- **Subprocess injection** (F-15 / T30) — `UnrealBridgeProcess` is the
-  only subprocess port, and its adapter uses typed `OsString` args (T30 §5).
-  No new subprocess ports in T31.
-- **Path traversal** (F-11 / T30) — every adapter implementation that
-  reads from disk uses the canonical `canonicalize + starts_with(root)` pattern
-  (T30 §4). Confirmed for all adapters in `adapters/secondary/`.
-- **Bounded ingestion** (F-05 / T30) — `ArtifactVerifier::verify_published`
+- **Subprocess injection** (F-15) — `UnrealBridgeProcess` is the only
+  subprocess port, and its adapter uses typed `OsString` args (security
+  audit §5). No new subprocess ports.
+- **Path traversal** (F-11) — every adapter implementation that reads
+  from disk uses the canonical `canonicalize + starts_with(root)` pattern
+  (security audit §4). Confirmed for all adapters in `adapters/secondary/`.
+- **Bounded ingestion** (F-05) — `ArtifactVerifier::verify_published`
   validates every declared hash before the runtime loads the scene. No new
-  ingestion surface in T31.
+  ingestion surface.
 
 ---
 
 ## Deliverable
 
-This document at `docs/integration_wiring_audit_t31.md` is the T31
-deliverable. No source-code changes were required by the audit (W-10 is
-flagged for T32).
+This document at `docs/integration_wiring_audit_t31.md` is the audit
+deliverable. No source-code changes were required (W-10 placeholder
+cleanup was deferred).

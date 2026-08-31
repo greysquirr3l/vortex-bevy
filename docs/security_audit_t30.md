@@ -1,4 +1,4 @@
-# T30 — Security Hardening & Vulnerability Review
+# Security Hardening & Vulnerability Review
 
 **Status:** Complete — no critical or high-severity findings.
 
@@ -268,6 +268,6 @@ Cooked/encrypted/unowned/DRM-protected inputs are detected and classified
 
 ## Deliverable
 
-This document at `docs/security_audit_t30.md` is the T30 deliverable per the
-task definition ("The deliverable is the findings document, not a code
-feature"). No source-code changes were required by the audit.
+This document at `docs/security_audit_t30.md` is the findings document
+("The deliverable is the findings document, not a code feature"). No
+source-code changes were required by the audit.
