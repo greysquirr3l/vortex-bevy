@@ -81,11 +81,16 @@ __pycache__/
 *.py[cod]
 
 # Historical planning artifacts removed by the cleanup policy.
-# `plan.toml`, `features.json`, `PROGRESS.md`, and `tasks/*.md` are tracked
-# Vortex project contracts and intentionally must not be ignored.
+
 IMPLEMENTATION_PLAN.md
 CLAUDE.md
 ORCHESTRATOR.md
+skills/
+AGENTS.md
+PROGRESS.md
+features.json
+plan.toml
+tasks/
 
 # IDE
 .vscode/
@@ -95,3 +100,5 @@ CLAUDE.md
 .mcp.json
 .windsurfrules
 .cursorrules
+.gitattributes
+.github/copilot-instructions.md
