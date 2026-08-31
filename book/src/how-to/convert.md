@@ -10,7 +10,11 @@ each per-engine classification means today.
 
 ## Invocation
 
-The four required flags are:
+The CLI takes nine flags total. Five are required for every
+`convert` invocation; the remaining four are required only for specific
+engines.
+
+Always required:
 
 - `--project <path>` — physical filesystem root for the source.
 - `--engine <name>` — engine family (`unreal`, `usd`, `unity`).
@@ -20,6 +24,9 @@ The four required flags are:
 - `--profile <name>` — deterministic conversion profile name. The
   profile hash is derived from the profile name (SHA-256 of its bytes)
   and combined with the source identity to form the conversion ID.
+
+Engine-specific (required for the engines listed):
+
 - `--object <id>` — engine-specific secondary identifier:
   - **Unreal**: `--object /Game/Path/Asset.Asset`
   - **USD**: `--object /Prim/Path`
