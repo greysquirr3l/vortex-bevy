@@ -25,18 +25,37 @@ reject_markers() {
   fi
 }
 
+command_present() {
+  command -v "$1" >/dev/null 2>&1
+}
+
 require_command ruff
 require_command pytest
 require_command gdlint
 require_command gdformat
-require_command dotnet
 
 ruff check --config "${bridge_root}/ruff.toml" "${bridge_root}/unreal" "${bridge_root}/tests"
 ruff format --check "${bridge_root}/unreal" "${bridge_root}/tests"
 pytest "${bridge_root}/tests"
 gdlint "${godot_bridge}"
 gdformat --check "${godot_bridge}"
-dotnet tool restore
-dotnet csharpier check "${unity_bridge}" "${unity_static_scene_bridge}" "${unity_lint_stubs}"
-dotnet build "${unity_lint_project}" --nologo --warnaserror
 reject_markers
+
+# Optional: Unity C# lint + build via dotnet-csharpier. The Unity bridge
+# tooling is host-specific (requires the .NET SDK plus the pinned
+# csharpier global tool). On hosts without dotnet or csharpier installed,
+# surface a warning and skip rather than aborting the pre-push hook.
+run_unity_lint() {
+  if ! command_present dotnet; then
+    printf 'dotnet not installed; skipping Unity bridge lint/build.\n' >&2
+    return 0
+  fi
+  if ! dotnet csharpier --version >/dev/null 2>&1; then
+    printf 'dotnet csharpier not installed; skipping Unity bridge lint/build. Restore via `dotnet tool restore` once.\n' >&2
+    return 0
+  fi
+  dotnet csharpier check "${unity_bridge}" "${unity_static_scene_bridge}" "${unity_lint_stubs}"
+  dotnet build "${unity_lint_project}" --nologo --warnaserror
+}
+
+run_unity_lint
