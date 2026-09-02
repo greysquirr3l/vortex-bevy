@@ -123,15 +123,32 @@ Add an icon by dropping a `.icns` (macOS), `.ico` (Windows), and
 
 ## Why not a cross-platform CI bundle job?
 
-Cross-platform `cargo bundle` runs are real (Ubuntu + macOS-14 +
-windows-latest in CI), but each matrix needs the platform-specific
-packaging tools (appimagetool, MSI bundler, codesign on macOS) and the
-artifact-upload steps. That job belongs in a release workflow, gated
-on tags. For local development, the `just bundle` recipe on each
-developer's host is faster and avoids the ~30 minutes of CI bundling
-on every push.
+It exists — `.github/workflows/bundle.yml` builds per-platform
+bundles on every `v*` semver tag and attaches them to a draft
+GitHub Release named after the tag. The workflow is independent of
+`ci.yml` so a release build can be reproduced without paying for the
+full quality matrix on every push.
+
+For local development, `just bundle` on each developer's host is
+faster than waiting for the ~30 minute CI matrix on every push.
+
+## Distribution channels
+
+The CI workflow publishes **unsigned** bundles as release assets. What
+each channel needs beyond that:
+
+| Channel                        | Status                  | Notes                                                                                                                                                                                                                                                                                                                |
+| ------------------------------ | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GitHub Releases                | ✅ workflow lands here  | `.deb`, `.rpm`, `.AppImage`, `.msi`, `.app` zip attached to the tag's release                                                                                                                                                                                                                                        |
+| macOS `.app` (direct download) | ✅                      | `cargo bundle --release` produces a self-contained `.app`                                                                                                                                                                                                                                                            |
+| Homebrew tap                   | Out of scope            | A tap and formula are out of scope until macOS code signing lands                                                                                                                                                                                                                                                    |
+| Windows MSI (direct install)   | ✅                      | Install via `msiexec /i Vortex-Bevy.msi /qb` or double-click                                                                                                                                                                                                                                                         |
+| `winget` / `scoop` manifests   | Out of scope            | Submission requires a published release + an authorized manifest review process                                                                                                                                                                                                                                      |
+| Debian / Fedora apt/yum repos  | Out of scope            | Repo publication is a separate concern from CI bundling. The unsigned `.deb` / `.rpm` artifacts install locally via `dpkg -i` / `rpm -i`                                                                                                                                                                             |
+| Arch Linux AUR                 | **Explicitly excluded** | The AUR ecosystem is currently compromised by fake packages impersonating legitimate projects. Vortex-Bevy will not publish there until the upstream AUR maintainers resolve the supply-chain incident. Track this in [#14](https://github.com/greysquirr3l/vortex-bevy/issues/14) if/when the decision is revisited |
 
 ## Going further
 
 - [Tutorial: Convert a USD stage end-to-end](../tutorial/usd-end-to-end.md) — produces a published conversion that the bundled viewer can load.
 - [Reference: CLI](./reference/cli.md) — the full CLI flag matrix the bundle exposes.
+- [Explanation: Deployment](../explanation/deployment.md) — how the bundle workflow ties into GitHub Releases.

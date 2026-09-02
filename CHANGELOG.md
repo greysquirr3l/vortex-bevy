@@ -14,6 +14,7 @@ All notable repository changes are documented here. Versioning follows the suppo
 - A repeatable release-readiness script, action pins, release recovery guidance, and cargo-geiger audit evidence.
 - A post-run window-probe in `vortex-bevy view` that surfaces a typed `CliReport` (`reason` + `remediation`) when no `bevy::window::Window` was spawned on the host, so the macOS 26 viewer-window limitation is no longer silent.
 - Cross-platform bundle metadata, a `just bundle` recipe, and a `scripts/build-bundle.sh` launcher driven by `cargo-bundle` for `.app`, `.msi`, `.deb`, and `.rpm` outputs.
+- A tag-driven `.github/workflows/bundle.yml` that builds per-platform bundles on every `v*` semver push and attaches them to a draft GitHub Release. Distribution channels (GitHub Releases, direct `.app` / `.msi` download, local `.deb` / `.rpm` install) are documented in the book; Homebrew / `winget` / `scoop` / apt+yum repos are out of scope; the Arch Linux AUR is explicitly excluded.
 - An MDBook user guide deployed via GitHub Pages and a repository `SECURITY.md` describing the threat model and reporting flow.
 
 ### Changed

@@ -1,0 +1,174 @@
+name: Release bundle
+
+# Builds per-platform application bundles on every semver tag push
+# (`v*`) and attaches them to a GitHub Release named after the tag.
+#
+# Triggers:
+#   - push of a `v*` tag (e.g. v0.1.0, v1.2.3-rc.1)
+#   - workflow_dispatch (manual run, with an explicit tag input)
+#
+# The workflow is independent of `ci.yml` so a release build can be
+# reproduced without paying for the full quality matrix on every tag.
+# Release artifacts are produced by `cargo bundle --release`, which
+# reads `[package.metadata.bundle]` from `crates/vortex-bevy/Cargo.toml`.
+#
+# Out of scope:
+#   - Arch Linux AUR (the AUR ecosystem is currently compromised by fake
+#     packages; the project will not publish there until that is resolved)
+#   - macOS / Windows code signing (cert handling belongs in a separate
+#     signing workflow gated on repository secrets)
+#   - Per-distro apt/yum repository uploads (the .deb and .rpm artifacts
+#     produced here are unsigned and intended for local installation via
+#     `dpkg -i` / `rpm -i`; distro-repo publication is a separate concern)
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release (e.g. v0.1.0)"
+        required: true
+        type: string
+
+# Tag-driven releases must serialize — overlapping tag builds would
+# race on the GitHub Release resource.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  # Releases also need write access to create the release + upload
+  # assets. The CI workflow uses `contents: read` because it only
+  # builds; this workflow mutates release state.
+
+jobs:
+  bundle:
+    name: Bundle (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_glob: "target/release/bundle/{deb,rpm,AppImage}/vortex-bevy*"
+            artifact_name: "vortex-bevy-linux-x86_64"
+          - os: macos-14
+            artifact_glob: "target/release/bundle/osx/Vortex-Bevy.app"
+            artifact_name: "vortex-bevy-macos-universal"
+            # macOS-14 runners are arm64; cargo-bundle produces a native
+            # arm64 .app. Universal binaries would require an explicit
+            # lipo step that is out of scope for this workflow.
+          - os: windows-latest
+            artifact_glob: "target/release/bundle/windows/*.msi"
+            artifact_name: "vortex-bevy-windows-x86_64"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772 # master
+        with:
+          toolchain: 1.97.1
+
+      - name: Install cargo-bundle
+        # Pinned via --locked so the dependency graph matches what the
+        # local developer uses (`cargo install cargo-bundle --locked`).
+        shell: bash
+        run: cargo install cargo-bundle --locked
+
+      - name: Build release binary
+        shell: bash
+        run: cargo build --release --bin vortex-bevy -p vortex-bevy
+
+      - name: Build platform bundle
+        shell: bash
+        run: cargo bundle --release --bin vortex-bevy -p vortex-bevy
+
+      - name: List produced artifacts
+        # Make the produced file list visible in the job log so a failed
+        # upload (glob matched zero files) is diagnosable from the UI
+        # without re-running locally.
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Bundle output for ${{ matrix.os }}:"
+          ls -la target/release/bundle/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.artifact_glob }}
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    name: Publish GitHub Release
+    needs: bundle
+    runs-on: ubuntu-latest
+    # `contents: write` is declared at the workflow scope; the matrix
+    # jobs only need read access to checkout.
+    permissions:
+      contents: write
+    steps:
+      - name: Resolve tag
+        id: tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download all bundle artifacts
+        uses: actions/download-artifact@484a0b528fb4d7bd804637ccb632e47a0e638317 # v4
+        with:
+          path: artifacts
+
+      - name: Verify every artifact is present
+        # download-artifact would silently produce an empty directory if
+        # the matrix was misconfigured. Fail fast with a useful error
+        # instead of pushing a release with missing assets.
+        shell: bash
+        run: |
+          set -euo pipefail
+          found=0
+          for dir in artifacts/*/; do
+            if [ -d "$dir" ] && [ -n "$(ls -A "$dir" 2>/dev/null || true)" ]; then
+              found=$((found + 1))
+              echo "artifact dir: $dir"
+              ls -la "$dir"
+            fi
+          done
+          if [ "$found" -lt 3 ]; then
+            echo "expected at least 3 artifact dirs (linux/macos/windows), got $found" >&2
+            exit 1
+          fi
+
+      - name: Create or update GitHub Release
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v2
+        with:
+          tag: ${{ steps.tag.outputs.tag }}
+          # Draft so a maintainer can edit the body / verify checksums
+          # before publishing. Use workflow_dispatch with a non-draft
+          # input or push the release live from the UI.
+          draft: true
+          generate_release_notes: true
+          files: |
+            artifacts/**/*.deb
+            artifacts/**/*.rpm
+            artifacts/**/*.AppImage
+            artifacts/**/*.app/**
+            artifacts/**/*.msi
+            artifacts/**/*.exe
+      - name: Summary
+        if: success()
+        shell: bash
+        run: |
+          echo "Release ${{ steps.tag.outputs.tag }} created as a draft."
+          echo "Visit ${{ github.server_url }}/${{ github.repository }}/releases"
+          echo "to verify the bundled artifacts and publish the release."
