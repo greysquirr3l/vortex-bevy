@@ -488,7 +488,7 @@ dependencies = [
  "futures-lite",
  "futures-util",
  "js-sys",
- "ron 0.12.2",
+ "ron",
  "serde",
  "stackfuture",
  "thiserror 2.0.20",
@@ -1613,7 +1613,7 @@ dependencies = [
  "bevy_transform",
  "bevy_utils",
  "derive_more",
- "ron 0.12.2",
+ "ron",
  "serde",
  "thiserror 2.0.20",
  "uuid",
@@ -4498,19 +4498,6 @@ checksum = "3582f63211428f83597b51b2ddb88e2a91a9d52d12831f9d08f5e624e8977422"
 
 [[package]]
 name = "ron"
-version = "0.10.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "beceb6f7bf81c73e73aeef6dd1356d9a1b2b4909e1f0fc3e59b034f9572d7b7f"
-dependencies = [
- "base64",
- "bitflags 2.13.1",
- "serde",
- "serde_derive",
- "unicode-ident",
-]
-
-[[package]]
-name = "ron"
 version = "0.12.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "81116b9531d61eabc41aeb228e4b6b2435bcca3233b98cf3b3077d4e6e9debb3"
@@ -5361,7 +5348,7 @@ dependencies = [
  "flate2",
  "gltf",
  "image",
- "ron 0.10.1",
+ "ron",
  "serde",
  "serde_json",
  "sha2",
