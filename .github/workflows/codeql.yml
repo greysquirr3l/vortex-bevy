@@ -24,4 +24,4 @@ jobs:
           build-mode: manual
       - uses: dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772 # master
       - run: cargo build --workspace --all-targets --all-features
-      - uses: github/codeql-action/analyze@6f5948dfacef28e207b48d0905cf90c03365536d # v3
+      - uses: github/codeql-action/analyze@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
