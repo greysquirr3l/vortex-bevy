@@ -52,16 +52,27 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            artifact_glob: "target/release/bundle/{deb,rpm,AppImage}/vortex-bevy*"
+            # actions/upload-artifact does not brace-expand, so list each
+            # bundle directory explicitly. Each entry accepts a glob.
+            #
+            # AppImage is intentionally omitted: `cargo bundle` only
+            # emits an `.AppImage` when `appimagetool` is on PATH, and
+            # the actionlint runners do not ship it. AppImage remains a
+            # local-developer format (see book/src/how-to/bundle.md).
+            artifact_paths: |
+              target/release/bundle/deb/*.deb
+              target/release/bundle/rpm/*.rpm
             artifact_name: "vortex-bevy-linux-x86_64"
           - os: macos-14
-            artifact_glob: "target/release/bundle/osx/Vortex-Bevy.app"
+            artifact_paths: "target/release/bundle/osx/Vortex-Bevy.app"
             artifact_name: "vortex-bevy-macos-universal"
             # macOS-14 runners are arm64; cargo-bundle produces a native
             # arm64 .app. Universal binaries would require an explicit
             # lipo step that is out of scope for this workflow.
           - os: windows-latest
-            artifact_glob: "target/release/bundle/windows/*.msi"
+            artifact_paths: |
+              target/release/bundle/windows/*.msi
+              target/release/bundle/windows/*.exe
             artifact_name: "vortex-bevy-windows-x86_64"
     steps:
       - name: Checkout
@@ -100,7 +111,7 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4
         with:
           name: ${{ matrix.artifact_name }}
-          path: ${{ matrix.artifact_glob }}
+          path: ${{ matrix.artifact_paths }}
           if-no-files-found: error
           retention-days: 14
 

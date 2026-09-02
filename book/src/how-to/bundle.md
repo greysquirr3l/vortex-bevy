@@ -117,9 +117,20 @@ The bundle metadata in `crates/vortex-bevy/Cargo.toml` declares:
 - `homepage` — links the bundled app to the project
 - `license = "MIT OR Apache-2.0"` — bundled Info.plist / installer metadata
 
-Add an icon by dropping a `.icns` (macOS), `.ico` (Windows), and
-`.png` (Linux) into `crates/vortex-bevy/assets/bundle/` and pointing
-`macos_icon_path` / `windows_icon_path` at them.
+Add an icon by dropping the three formats into
+`crates/vortex-bevy/assets/bundle/`:
+
+| File                  | Format | Platform |
+| --------------------- | ------ | -------- |
+| `vortex-bevy.icns`    | ICNS   | macOS    |
+| `vortex-bevy.ico`     | ICO    | Windows  |
+| `vortex-bevy-512.png` | PNG    | Linux    |
+
+cargo-bundle v0.11 picks the right format per platform from a single
+`icon` array in `[package.metadata.bundle]`. The metadata block already
+declares these paths; just drop the files in. Regeneration commands
+from a single SVG source live in
+[`crates/vortex-bevy/assets/bundle/README.md`](../../crates/vortex-bevy/assets/bundle/README.md).
 
 ## Why not a cross-platform CI bundle job?
 
@@ -139,8 +150,7 @@ each channel needs beyond that:
 
 | Channel                        | Status                  | Notes                                                                                                                                                                                                                                                                                                                |
 | ------------------------------ | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GitHub Releases                | ✅ workflow lands here  | `.deb`, `.rpm`, `.AppImage`, `.msi`, `.app` zip attached to the tag's release                                                                                                                                                                                                                                        |
-| macOS `.app` (direct download) | ✅                      | `cargo bundle --release` produces a self-contained `.app`                                                                                                                                                                                                                                                            |
+| GitHub Releases                | ✅ workflow lands here  | `.deb`, `.rpm`, `.msi`, `.app` zip attached to the tag's release. AppImage is a local-developer-only format (requires `appimagetool` on PATH; the CI runners don't ship it) |
 | Homebrew tap                   | Out of scope            | A tap and formula are out of scope until macOS code signing lands                                                                                                                                                                                                                                                    |
 | Windows MSI (direct install)   | ✅                      | Install via `msiexec /i Vortex-Bevy.msi /qb` or double-click                                                                                                                                                                                                                                                         |
 | `winget` / `scoop` manifests   | Out of scope            | Submission requires a published release + an authorized manifest review process                                                                                                                                                                                                                                      |

@@ -28,11 +28,17 @@ harness = false
 
 # Cross-platform bundle metadata consumed by `cargo bundle --release`.
 # Produces:
-#   - macOS:   target/release/bundle/osx/Vortex-Bevy.app
-#   - Windows: target/release/bundle/windows/Vortex-Bevy.msi   (.exe in the bundle/)
-#   - Linux:   target/release/bundle/deb/vortex-bevy_*.deb    (and .rpm where applicable)
-# Icon and PNG metadata are sourced from assets/bundle/ when present.
-[package.metadata.bundle]
+#   - macOS:   target/release/bundle/osx/Vortex-Bevy.app + .dmg
+#   - Windows: target/release/bundle/windows/vortex-bevy.msi
+#   - Linux:   target/release/bundle/{deb,rpm,AppImage}/vortex-bevy_*
+#
+# cargo-bundle v0.11 reads per-binary settings from
+# `[package.metadata.bundle.bin.<name>]`. Settings at the
+# top-level `[package.metadata.bundle]` are ignored when
+# `--bin <name>` is passed to cargo-bundle (which is what the
+# `.github/workflows/bundle.yml` workflow does), so the actual
+# metadata lives under the `.bin.vortex-bevy` table below.
+[package.metadata.bundle.bin.vortex-bevy]
 name = "Vortex-Bevy"
 version = "0.1.0"
 identifier = "dev.greysquirr3l.vortex-bevy"
@@ -42,20 +48,19 @@ long_description = "Vortex-Bevy is an offline CLI plus an optional Bevy 0.19 des
 homepage = "https://github.com/greysquirr3l/vortex-bevy"
 publisher = "Nick Campbell"
 license = "MIT OR Apache-2.0"
-# Default CLI binary is the same one Cargo builds. Bundle wraps it with the
-# platform-specific metadata above.
-binaries = [
-    { name = "vortex-bevy", path = "target/release/vortex-bevy" },
+# Bundle icon paths. cargo-bundle v0.11 picks the best format per platform
+# automatically (.icns on macOS, .ico on Windows, .png on Linux) from a
+# single `icon` array. Files live under crates/vortex-bevy/assets/bundle/
+# and are read at bundle-build time from the workspace root.
+icon = [
+    "crates/vortex-bevy/assets/bundle/vortex-bevy.icns",
+    "crates/vortex-bevy/assets/bundle/vortex-bevy.ico",
+    "crates/vortex-bevy/assets/bundle/vortex-bevy-512.png",
+    "crates/vortex-bevy/assets/bundle/vortex-bevy-128.png",
 ]
 # macOS-specific
 osx_frameworks = []
 osx_minimum_system_version = "11.0"
-osx_entitlements = ""
-# Windows-specific: declare the binary so cargo-bundle packages the .exe + SxS manifest
-windows_icon_path = ""
-# Linux-specific
-linux_deb_depends = "libc6"
-linux_rpm_depends = "glibc"
 
 [lints]
 workspace = true
