@@ -1,7 +1,9 @@
 # Rust
 /target/
 /**/target/
-/**/bundle/
+# Per-crate cargo-bundle output (target/release/bundle/) — never the
+# source icon directory under crates/*/assets/bundle/.
+/**/target/**/bundle/
 **/*.rs.bk
 
 # mdbook user guide build artifacts
