@@ -2,7 +2,7 @@
 
 The Bevy viewer window needs a foreground GUI session to open. On
 macOS that's an `.app` bundle (so AppKit grants a foreground window
-policy); on Windows that's a self-contained `.exe` (cargo-bundle's MSI emitter has known hyphen-binary bugs and is intentionally avoided; see GitHub burtonageo/cargo-bundle#77 and #221); on Linux it's
+policy); on Windows that's a self-contained `.exe` built directly by `cargo build --release` (cargo-bundle's Windows MSI emitter has known hyphen-binary bugs and its exe emitter requires a resource directory rustc doesn't emit — both intentionally avoided; see GitHub burtonageo/cargo-bundle#77 and #221); on Linux it's
 `.desktop` + icon at the XDG paths. A bare `cargo run` from a
 non-foreground shell can't open a Bevy window — you'll see the typed
 report printed and the process exits silently.
@@ -54,7 +54,7 @@ and prints the produced bundle's location.
 | Platform         | Bundle path                                                                                                   |
 | ---------------- | ------------------------------------------------------------------------------------------------------------- |
 | macOS            | `target/release/bundle/osx/Vortex-Bevy.app`                                                                   |
-| Windows          | `target/release/bundle/exe/vortex-bevy.exe` (self-contained binary; MSI emitter intentionally avoided, see burtonageo/cargo-bundle#77) |
+| Windows          | `target/release/vortex-bevy.exe` (raw release binary; cargo-bundle skipped on Windows, see burtonageo/cargo-bundle#77 / #221 / `WIN32_ERROR(1812)`) |
 | Linux (Debian)   | `target/release/bundle/deb/vortex-bevy_0.1.0_<arch>.deb`                                                      |
 | Linux (Fedora)   | `target/release/bundle/rpm/vortex-bevy-0.1.0.<arch>.rpm`                                                      |
 | Linux (AppImage) | `target/release/bundle/AppImage/Vortex-Bevy_0.1.0_<arch>.AppImage`                                            |

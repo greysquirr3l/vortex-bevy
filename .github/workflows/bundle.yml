@@ -70,17 +70,24 @@ jobs:
             # arm64 .app. Universal binaries would require an explicit
             # lipo step that is out of scope for this workflow.
           - os: windows-latest
-            # cargo-bundle's MSI emitter has known issues on Windows:
-            #   * GitHub burtonageo/cargo-bundle#77 (Windows MSI error)
-            #   * GitHub burtonageo/cargo-bundle#221 (Windows bundling
-            #     failing in CI)
-            # The MSI keypath column rejects hyphens in the binary
-            # name, which our `vortex-bevy` binary triggers. The `.exe`
-            # emitter is stable and copies the binary with no MSI
-            # installer overhead. End users can install via direct
-            # download + PATH entry or a future WiX/MSI step that does
-            # not rely on cargo-bundle.
-            artifact_paths: "target/release/bundle/exe/*.exe"
+            # cargo-bundle's Windows emitters are both broken:
+            #   * MSI: GitHub burtonageo/cargo-bundle#77 (Windows MSI
+            #     error) and #221 (Windows bundling failing in GH
+            #     Actions). The MSI keypath column also rejects
+            #     hyphens in the binary name, which `vortex-bevy` hits.
+            #   * exe: cargo-bundle v0.11's exe emitter tries to embed
+            #     an icon + version resources into the PE binary via
+            #     `winres_edit`, which fails with WIN32_ERROR(1812)
+            #     `ERROR_RESOURCE_DATA_NOT_FOUND` when the source
+            #     binary has no resource section (the default rustc
+            #     release output).
+            # The Windows matrix leg therefore does NOT run
+            # cargo-bundle. It uploads the raw release executable
+            # produced by `cargo build --release`, which is already a
+            # self-contained PE binary that runs on any Windows host with
+            # no installer. Icon embedding for Windows is a future task
+            # (post-build PE edit with `winres` or `cargo-packager`).
+            artifact_paths: "target/release/vortex-bevy.exe"
             artifact_name: "vortex-bevy-windows-x86_64"
     steps:
       - name: Checkout
@@ -94,19 +101,27 @@ jobs:
       - name: Install cargo-bundle
         # Pinned via --locked so the dependency graph matches what the
         # local developer uses (`cargo install cargo-bundle --locked`).
+        # Skipped on Windows: cargo-bundle v0.11's Windows emitters
+        # are both broken (see the windows-latest matrix entry above).
         shell: bash
-        run: cargo install cargo-bundle --locked
+        run: |
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            echo "Skipping cargo-bundle on Windows (both MSI and exe emitters broken; see artifact_paths rationale)"
+          else
+            cargo install cargo-bundle --locked
+          fi
 
       - name: Build release binary
         shell: bash
         run: cargo build --release --bin vortex-bevy -p vortex-bevy
 
       - name: Build platform bundle
+        # Linux + macOS use cargo-bundle. Windows skips it (the Windows
+        # matrix leg uploads the raw release `.exe` instead).
         shell: bash
         run: |
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            # Force the `.exe` emitter on Windows; see artifact_paths.
-            cargo bundle --release --bin vortex-bevy -p vortex-bevy --format exe
+            echo "Skipping cargo-bundle on Windows; uploading raw release binary"
           else
             cargo bundle --release --bin vortex-bevy -p vortex-bevy
           fi
