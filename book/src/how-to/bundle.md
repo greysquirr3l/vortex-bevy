@@ -2,7 +2,7 @@
 
 The Bevy viewer window needs a foreground GUI session to open. On
 macOS that's an `.app` bundle (so AppKit grants a foreground window
-policy); on Windows that's an MSI with a SxS manifest; on Linux it's
+policy); on Windows that's a self-contained `.exe` (cargo-bundle's MSI emitter has known hyphen-binary bugs and is intentionally avoided; see GitHub burtonageo/cargo-bundle#77 and #221); on Linux it's
 `.desktop` + icon at the XDG paths. A bare `cargo run` from a
 non-foreground shell can't open a Bevy window — you'll see the typed
 report printed and the process exits silently.
@@ -54,7 +54,7 @@ and prints the produced bundle's location.
 | Platform         | Bundle path                                                                                                   |
 | ---------------- | ------------------------------------------------------------------------------------------------------------- |
 | macOS            | `target/release/bundle/osx/Vortex-Bevy.app`                                                                   |
-| Windows          | `target/release/bundle/windows/Vortex-Bevy.msi` (and the bundled `.exe` + SxS manifest in the same directory) |
+| Windows          | `target/release/bundle/exe/vortex-bevy.exe` (self-contained binary; MSI emitter intentionally avoided, see burtonageo/cargo-bundle#77) |
 | Linux (Debian)   | `target/release/bundle/deb/vortex-bevy_0.1.0_<arch>.deb`                                                      |
 | Linux (Fedora)   | `target/release/bundle/rpm/vortex-bevy-0.1.0.<arch>.rpm`                                                      |
 | Linux (AppImage) | `target/release/bundle/AppImage/Vortex-Bevy_0.1.0_<arch>.AppImage`                                            |
@@ -80,7 +80,7 @@ session.
 
 ### Windows
 
-Install the MSI (double-click it, or `msiexec /i Vortex-Bevy.msi /qb`). Launch from Start Menu, or directly:
+Download the `.exe` from the GitHub Release, add it to `PATH`, or pin it in the Start Menu. Launch from a terminal or via a desktop shortcut:
 
 ```text
 "C:\Program Files\Vortex-Bevy\vortex-bevy.exe" view --artifact-root C:\path\to\output
@@ -150,9 +150,9 @@ each channel needs beyond that:
 
 | Channel                        | Status                  | Notes                                                                                                                                                                                                                                                                                                                |
 | ------------------------------ | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GitHub Releases                | ✅ workflow lands here  | `.deb`, `.rpm`, `.msi`, `.app` zip attached to the tag's release. AppImage is a local-developer-only format (requires `appimagetool` on PATH; the CI runners don't ship it) |
+| GitHub Releases                | ✅ workflow lands here  | `.deb`, `.rpm`, `.exe`, `.app` zip attached to the tag's release. AppImage and MSI are local-developer-only formats (MSI is intentionally avoided due to cargo-bundle#77 / #221) |
 | Homebrew tap                   | Out of scope            | A tap and formula are out of scope until macOS code signing lands                                                                                                                                                                                                                                                    |
-| Windows MSI (direct install)   | ✅                      | Install via `msiexec /i Vortex-Bevy.msi /qb` or double-click                                                                                                                                                                                                                                                         |
+| Windows `.exe` (direct download)| ✅                     | Add to PATH or pin to Start Menu. MSI deliberately not shipped — see burtonageo/cargo-bundle#77 and #221                                                                                                                                                                                                                                                         |
 | `winget` / `scoop` manifests   | Out of scope            | Submission requires a published release + an authorized manifest review process                                                                                                                                                                                                                                      |
 | Debian / Fedora apt/yum repos  | Out of scope            | Repo publication is a separate concern from CI bundling. The unsigned `.deb` / `.rpm` artifacts install locally via `dpkg -i` / `rpm -i`                                                                                                                                                                             |
 | Arch Linux AUR                 | **Explicitly excluded** | The AUR ecosystem is currently compromised by fake packages impersonating legitimate projects. Vortex-Bevy will not publish there until the upstream AUR maintainers resolve the supply-chain incident. Track this in [#14](https://github.com/greysquirr3l/vortex-bevy/issues/14) if/when the decision is revisited |

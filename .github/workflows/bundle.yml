@@ -70,9 +70,17 @@ jobs:
             # arm64 .app. Universal binaries would require an explicit
             # lipo step that is out of scope for this workflow.
           - os: windows-latest
-            artifact_paths: |
-              target/release/bundle/windows/*.msi
-              target/release/bundle/windows/*.exe
+            # cargo-bundle's MSI emitter has known issues on Windows:
+            #   * GitHub burtonageo/cargo-bundle#77 (Windows MSI error)
+            #   * GitHub burtonageo/cargo-bundle#221 (Windows bundling
+            #     failing in CI)
+            # The MSI keypath column rejects hyphens in the binary
+            # name, which our `vortex-bevy` binary triggers. The `.exe`
+            # emitter is stable and copies the binary with no MSI
+            # installer overhead. End users can install via direct
+            # download + PATH entry or a future WiX/MSI step that does
+            # not rely on cargo-bundle.
+            artifact_paths: "target/release/bundle/exe/*.exe"
             artifact_name: "vortex-bevy-windows-x86_64"
     steps:
       - name: Checkout
@@ -95,7 +103,13 @@ jobs:
 
       - name: Build platform bundle
         shell: bash
-        run: cargo bundle --release --bin vortex-bevy -p vortex-bevy
+        run: |
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            # Force the `.exe` emitter on Windows; see artifact_paths.
+            cargo bundle --release --bin vortex-bevy -p vortex-bevy --format exe
+          else
+            cargo bundle --release --bin vortex-bevy -p vortex-bevy
+          fi
 
       - name: List produced artifacts
         # Make the produced file list visible in the job log so a failed
