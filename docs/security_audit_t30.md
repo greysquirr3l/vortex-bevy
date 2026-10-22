@@ -15,7 +15,7 @@ database, 2026-08-30).
 
 ## Threat-model summary
 
-`vortex-bevy` is an **offline, single-binary CLI plus an optional Bevy 0.19
+`vortex-bevy` is an **offline, single-binary CLI plus an optional Bevy 0.20
 desktop viewer**. It does not expose an HTTP server, does not connect to a
 database, and does not fetch arbitrary URLs. The attack surface is:
 
@@ -58,7 +58,7 @@ documents that intent rather than treating absence as a gap.
 | F-16 | Cooked/encrypted/DRM input handling              | Info     | Covered    | Per-asset classification `converted                                                                                                                                                                                                         | baked | requires_adapter | unsupported | rejected`; encryption/license gates are detection-only, never bypassed. |
 | F-17 | Subprocess script provenance                     | Info     | Covered    | Only the checked-in `bridges/unreal/vortex_unreal_*.py` scripts are launched; resolved by canonical path relative to a fixed repository root.                                                                                               |
 | F-18 | Unsafe Rust                                      | —        | N/A        | `unsafe_code = "forbid"` at workspace level; no production occurrences.                                                                                                                                                                     |
-| F-19 | Transitive dependency vulnerabilities            | Info     | Clean      | `cargo audit` exit 0 against 1,226 RustSec advisories (574 crates scanned). `cargo deny --all-features check` reports `advisories ok, bans ok, licenses ok, sources ok`.                                                                    |
+| F-19 | Transitive dependency vulnerabilities            | Info     | Documented | `cargo audit` exit 0 against 1,349 RustSec advisories (587 crates scanned). `cargo deny --all-features check` reports `advisories ok, bans ok, licenses ok, sources ok`. One advisory is carried as a documented, unreachable-code exception — see §8. |
 | F-20 | Duplicate transitive Windows crates              | Low      | Documented | `windows-sys` (0.52 / 0.59 / 0.60) and `windows_x86_64_msvc` (0.52.6 / 0.53.1) coexist due to `winit`/`bevy_egui`/`arboard` divergence. Windows-only targets; no runtime impact on Linux/macOS or in the conversion pipeline. Not blocking. |
 
 ---
@@ -197,8 +197,8 @@ project-provided scripts (`vortex_unreal_bridge.py` docstring:
 
 ```
 $ cargo audit
-Loaded 1226 security advisories
-Scanning Cargo.lock for vulnerabilities (574 crate dependencies)
+Loaded 1349 security advisories
+Scanning Cargo.lock for vulnerabilities (587 crate dependencies)
 EXIT=0
 ```
 
@@ -207,7 +207,23 @@ $ cargo deny --all-features check
 advisories ok, bans ok, licenses ok, sources ok
 ```
 
-Both clean.
+Both pass, with one shared exception recorded in `deny.toml` and
+`.cargo/audit.toml`:
+
+**RUSTSEC-2026-0344 — decompression bomb in `ruzstd` 0.8.3.**
+`bevy_egui` requests `bevy_image/zstd_rust`, so `ruzstd` is compiled into the
+build. It is never *called*: its only call site is `bevy_image::ktx2`, which is
+compiled solely under the `bevy_image/ktx2` feature, and no crate in this
+workspace enables that feature. `nm` over the built `libbevy_image-*.rlib` and
+over the linked `vortex-bevy` binary both report zero `ruzstd` symbols, so the
+vulnerable decoder is not present in the shipped artifact. This workspace also
+never decodes zstd input — textures are normalized to PNG.
+
+The advisory is a denial-of-service only (memory stays in bounds), and the fix
+(`ruzstd` 0.9.1) is semver-incompatible with `bevy_image` 0.20.0's `^0.8.0`
+requirement, so it cannot be selected today. Both exception entries carry the
+same rationale and must be removed once Bevy bumps `ruzstd` to `>=0.9.1`; they
+should be re-verified on every dependency bump.
 
 ## 9. Workspace lint posture (F-18)
 

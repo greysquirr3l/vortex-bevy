@@ -1,6 +1,6 @@
 # Security model
 
-Vortex-Bevy is an **offline CLI plus an optional Bevy 0.19 desktop
+Vortex-Bevy is an **offline CLI plus an optional Bevy 0.20 desktop
 viewer**. It does not expose an HTTP server, connect to a database, or
 fetch URLs on the user's behalf. The attack surface is local-file
 ingestion, local subprocess invocation, and the Bevy desktop window.

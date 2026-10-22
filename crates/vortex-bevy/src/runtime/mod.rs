@@ -1,4 +1,4 @@
-//! Bevy 0.19 runtime loading for validated Vortex conversion artifacts.
+//! Bevy 0.20 runtime loading for validated Vortex conversion artifacts.
 
 mod components;
 mod desktop;
@@ -63,7 +63,7 @@ pub use viewer::{
     ViewerCommand, ViewerCommandQueue, VortexViewerPlugin, VortexViewerState, update_viewer_state,
 };
 
-/// Builds a headless-capable Bevy 0.19 application configured to load assets from one directory.
+/// Builds a headless-capable Bevy 0.20 application configured to load assets from one directory.
 ///
 /// # Examples
 ///
@@ -124,10 +124,10 @@ pub fn build_runtime_app(asset_root: impl Into<String>) -> App {
     app
 }
 
-/// Builds the GUI Bevy 0.19 application used by the `view` CLI command.
+/// Builds the GUI Bevy 0.20 application used by the `view` CLI command.
 ///
 /// Unlike [`build_runtime_app`], this constructor does **not** call
-/// `finish()` or `cleanup()` ahead of time. Bevy 0.19's
+/// `finish()` or `cleanup()` ahead of time. Bevy 0.20's
 /// `bevy_pbr::EnvironmentMapGenerationPlugin::finish` hook adds a sub-plugin
 /// during `finish()`, which would panic if `finish()` had already been
 /// called. The CLI's `view` dispatch builds this variant and then calls

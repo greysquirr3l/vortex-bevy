@@ -128,7 +128,7 @@ use it directly.
 
 ## `view`
 
-Open the Bevy 0.19 desktop viewer for verified artifacts.
+Open the Bevy 0.20 desktop viewer for verified artifacts.
 
 ```text
 vortex-bevy view --artifact-root <path> [--format <text|json>]

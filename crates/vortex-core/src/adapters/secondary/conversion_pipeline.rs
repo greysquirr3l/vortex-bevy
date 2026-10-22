@@ -53,7 +53,7 @@ use crate::{
 
 const MANIFEST_FILE: &str = "scene.manifest.ron";
 const GLB_FILE: &str = "scene.glb";
-const SUPPORTED_BEVY_VERSION: &str = "0.19";
+const SUPPORTED_BEVY_VERSION: &str = "0.20";
 
 /// Typed remediation for [`ConversionPipelineError::PrimCountExceedsGlb`].
 ///
@@ -363,8 +363,8 @@ mod tests {
 
     use super::*;
     use crate::domain::{
-        ConversionState, ExportProfileName, ProjectRoot, StageSelection, UnrealObjectPath,
-        UsdPrimPath,
+        ConversionState, DEFAULT_MANIFEST_LIMIT_BYTES, ExportProfileName, ProjectRoot,
+        StageSelection, UnrealObjectPath, UsdPrimPath,
     };
 
     fn fixture_root(label: &str) -> Result<PathBuf, Box<dyn std::error::Error>> {
@@ -449,6 +449,14 @@ mod tests {
         let id = conversion.id();
         let store = AtomicArtifactStore::new(&output_root, "usd-out".parse()?)?;
         assert!(store.verify_published(id).is_ok());
+
+        let manifest_path = store.published_manifest_path(id)?;
+        let manifest =
+            SceneManifest::from_ron(&fs::read(&manifest_path)?, DEFAULT_MANIFEST_LIMIT_BYTES)?;
+        assert_eq!(
+            manifest.compatibility.minimum_bevy_version, SUPPORTED_BEVY_VERSION,
+            "published manifest must declare the Bevy version this runtime supports"
+        );
 
         fs::remove_dir_all(&root)?;
         fs::remove_dir_all(&output_root)?;

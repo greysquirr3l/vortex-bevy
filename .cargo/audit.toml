@@ -1,0 +1,22 @@
+# Cargo-audit advisory exceptions.
+#
+# Every entry here must name the advisory, why the affected code cannot be reached
+# in this workspace's build, and what upstream change removes the need for it.
+# Re-check these whenever the locked dependency graph changes.
+[advisories]
+ignore = [
+    # RUSTSEC-2026-0344 — decompression bomb in `ruzstd` 0.8.3.
+    #
+    # `bevy_egui` requests `bevy_image/zstd_rust`, which pulls `ruzstd` into the
+    # graph. `ruzstd` is only *called* from `bevy_image::ktx2`, which is gated
+    # behind the `bevy_image/ktx2` feature. No crate in this workspace enables
+    # that feature, so the vulnerable decoder is not compiled in: `nm` over
+    # `target/debug/deps/libbevy_image-*.rlib` and over the linked `vortex-bevy`
+    # binary both report zero `ruzstd` symbols. This workspace also never decodes
+    # zstd input; textures are normalized to PNG.
+    #
+    # The fix (ruzstd 0.9.1) is semver-incompatible with the `^0.8.0` requirement
+    # in bevy_image 0.20.0, so `cargo update -p ruzstd --precise 0.9.1` cannot
+    # resolve. Drop this entry once Bevy bumps `ruzstd` to >=0.9.1.
+    "RUSTSEC-2026-0344",
+]

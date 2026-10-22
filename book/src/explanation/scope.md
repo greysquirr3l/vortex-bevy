@@ -24,7 +24,7 @@ Vortex-Bevy:
   by the matching Unreal Editor.
 - Packages authorized Unity URP static-scene exports produced by the
   matching Unity Editor.
-- Loads and renders the resulting GLBs in a Bevy 0.19 desktop viewer.
+- Loads and renders the resulting GLBs in a Bevy 0.20 desktop viewer.
 
 The product emits a per-asset classification — `converted`, `baked`,
 `requires_adapter`, `unsupported`, or `rejected` — and a typed

@@ -27,7 +27,7 @@ cd vortex-bevy
 cargo build --workspace --all-targets --all-features
 ```
 
-The first build pulls the locked dependency graph (Bevy 0.19, glTF, etc.)
+The first build pulls the locked dependency graph (Bevy 0.20, glTF, etc.)
 and compiles both crates. Expect a few minutes on a clean machine.
 
 ## Verify the toolchain

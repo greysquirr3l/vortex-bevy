@@ -303,7 +303,7 @@ fn package_manifest(
             diagnostics: Vec::new(),
         }],
         CompatibilityRequirements {
-            minimum_bevy_version: "0.19".to_owned(),
+            minimum_bevy_version: "0.20".to_owned(),
             required_capabilities: BTreeSet::from([
                 CompatibilityCapability::BevyGltfPbr,
                 CompatibilityCapability::UsdFlattenedStage,
@@ -445,7 +445,7 @@ fn package_manifest_rejects_a_child_without_the_flattened_parent_artifact()
             diagnostics: Vec::new(),
         }],
         CompatibilityRequirements {
-            minimum_bevy_version: "0.19".to_owned(),
+            minimum_bevy_version: "0.20".to_owned(),
             required_capabilities: BTreeSet::new(),
         },
     )?

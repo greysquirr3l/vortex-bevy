@@ -199,7 +199,7 @@ fn self_authored_static_scene_report_is_deterministic_published_and_loaded()
         ],
         vec![scene_source(first.source.clone(), first.material_classification.clone())],
         CompatibilityRequirements {
-            minimum_bevy_version: "0.19".to_owned(),
+            minimum_bevy_version: "0.20".to_owned(),
             required_capabilities: BTreeSet::from([
                 CompatibilityCapability::BevyGltfPbr,
                 CompatibilityCapability::BevyPunctualLights,

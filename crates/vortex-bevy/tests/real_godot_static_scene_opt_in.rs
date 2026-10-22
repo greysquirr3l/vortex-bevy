@@ -178,7 +178,7 @@ fn manifest_for(
             ),
         ],
         CompatibilityRequirements {
-            minimum_bevy_version: "0.19".to_owned(),
+            minimum_bevy_version: "0.20".to_owned(),
             required_capabilities: BTreeSet::from([
                 CompatibilityCapability::BevyGltfPbr,
                 CompatibilityCapability::BevyPunctualLights,

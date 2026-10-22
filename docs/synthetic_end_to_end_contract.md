@@ -12,10 +12,10 @@ The `end_to_end_conversion` integration suite executes the following owned path 
 | Canonical scene | The fixture’s typed USD source identity is retained in `SourceLink`; a self-authored canonical triangle, camera, and point light are graph-validated. The bounded USDA adapter remains `requires_adapter` for full semantic composition, so the suite does not claim generic USD conversion. |
 | Package | `GlbWriter` packages the validated canonical scene twice. The resulting GLB bytes and SHA-256 hash are equal, and the output includes mesh, camera, and punctual-light structures. |
 | Publication | `AtomicArtifactStore` publishes the manifest and GLB once, reuses the verified directory on the second identical request, and verifies the declared artifact hash before runtime use. |
-| Bevy load | The Bevy 0.19 app uses the root-confined published conversion path. Dynamic GLTF world spawning retains `WorldAssetRoot` and Vortex provenance after the asset resolves headlessly. |
+| Bevy load | The Bevy 0.20 app uses the root-confined published conversion path. Dynamic GLTF world spawning retains `WorldAssetRoot` and Vortex provenance after the asset resolves headlessly. |
 | Failure behavior | Malformed USDA, attempted output-root escape, and post-publication GLB corruption are rejected. Corruption creates `VortexRuntimeDiagnostic` rather than a Vortex scene root. |
 
-The app explicitly registers the reflected Bevy 0.19 components emitted by the GLTF world spawner for dynamic mesh, material, GLTF labels, camera, light, visibility, AABB, and frustum entities. This makes current headless GLTF scene spawning exercise the same runtime mechanism used by the desktop viewer.
+The app explicitly registers the reflected Bevy 0.20 components emitted by the GLTF world spawner for dynamic mesh, material, GLTF labels, camera, light, visibility, AABB, and frustum entities. This makes current headless GLTF scene spawning exercise the same runtime mechanism used by the desktop viewer.
 
 ## Compatibility Matrix
 

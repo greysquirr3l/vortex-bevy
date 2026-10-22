@@ -50,7 +50,7 @@ reject the manifest with a typed error rather than guessing.
     ],
     packaged_scenes: [...],
     compatibility: (
-        minimum_bevy_version: "0.19",
+        minimum_bevy_version: "0.20",
         required_capabilities: [BevyGltfPbr, ...],
     ),
 )

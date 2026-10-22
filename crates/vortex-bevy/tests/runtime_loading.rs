@@ -32,6 +32,9 @@ use vortex_core::{
     },
 };
 
+/// Bevy version the runtime accepts in a manifest's compatibility declaration.
+const SUPPORTED_BEVY_VERSION: &str = "0.20";
+
 fn source_identity() -> Result<SourceIdentity, Box<dyn Error>> {
     Ok(SourceIdentity::Unreal {
         project_root: ProjectRoot::from_str("FixtureProject")?,
@@ -71,6 +74,14 @@ fn write_manifest_fixture(
     root: &Path,
     capability: CompatibilityCapability,
 ) -> Result<PathBuf, Box<dyn Error>> {
+    write_manifest_fixture_with_version(root, capability, SUPPORTED_BEVY_VERSION)
+}
+
+fn write_manifest_fixture_with_version(
+    root: &Path,
+    capability: CompatibilityCapability,
+    minimum_bevy_version: &str,
+) -> Result<PathBuf, Box<dyn Error>> {
     let glb = minimal_glb()?;
     let glb_path = root.join("scene.glb");
     fs::write(&glb_path, &glb)?;
@@ -98,7 +109,7 @@ fn write_manifest_fixture(
             diagnostics: Vec::new(),
         }],
         CompatibilityRequirements {
-            minimum_bevy_version: "0.19".to_owned(),
+            minimum_bevy_version: minimum_bevy_version.to_owned(),
             required_capabilities: BTreeSet::from([capability]),
         },
     )?;
@@ -136,7 +147,7 @@ fn publish_runtime_fixture(
             diagnostics: Vec::new(),
         }],
         CompatibilityRequirements {
-            minimum_bevy_version: "0.19".to_owned(),
+            minimum_bevy_version: "0.20".to_owned(),
             required_capabilities: BTreeSet::from([CompatibilityCapability::BevyGltfPbr]),
         },
     )?;
@@ -260,6 +271,38 @@ fn checksum_mismatch_and_unsupported_capability_fail_closed() -> Result<(), Box<
     let capability_manifest =
         write_manifest_fixture(&capability_root, CompatibilityCapability::UnrealEditorExport)?;
     assert!(verify_manifest(&capability_manifest).is_err());
+
+    Ok(())
+}
+
+#[test]
+fn manifests_declaring_an_unsupported_bevy_version_fail_closed() -> Result<(), Box<dyn Error>> {
+    let stale_root = fixture_root("t20-runtime-bevy-version");
+    reset_root(&stale_root)?;
+    let stale_manifest = write_manifest_fixture_with_version(
+        &stale_root,
+        CompatibilityCapability::BevyGltfPbr,
+        "0.19",
+    )?;
+    let error = verify_manifest(&stale_manifest)
+        .err()
+        .ok_or("a manifest declaring Bevy 0.19 must be rejected by the Bevy 0.20 runtime")?;
+    assert!(error.to_string().contains("Bevy 0.20"), "unexpected rejection reason: {error}");
+
+    let future_root = fixture_root("t20-runtime-bevy-version-future");
+    reset_root(&future_root)?;
+    let future_manifest = write_manifest_fixture_with_version(
+        &future_root,
+        CompatibilityCapability::BevyGltfPbr,
+        "0.21",
+    )?;
+    assert!(verify_manifest(&future_manifest).is_err());
+
+    let supported_root = fixture_root("t20-runtime-bevy-version-supported");
+    reset_root(&supported_root)?;
+    let supported_manifest =
+        write_manifest_fixture(&supported_root, CompatibilityCapability::BevyGltfPbr)?;
+    assert!(verify_manifest(&supported_manifest).is_ok());
 
     Ok(())
 }

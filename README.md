@@ -1,6 +1,6 @@
 # Vortex-Bevy
 
-Vortex-Bevy converts **authorized** Unreal Engine source-project assets and selected OpenUSD stages into deterministic Bevy 0.19 runtime artifacts. The first runtime contract is a Bevy-compatible GLB plus a versioned `scene.manifest.ron` sidecar that preserves source identity, selected USD configuration, classification, and diagnostics.
+Vortex-Bevy converts **authorized** Unreal Engine source-project assets and selected OpenUSD stages into deterministic Bevy 0.20 runtime artifacts. The first runtime contract is a Bevy-compatible GLB plus a versioned `scene.manifest.ron` sidecar that preserves source identity, selected USD configuration, classification, and diagnostics.
 
 ## Support boundary
 
@@ -10,14 +10,14 @@ Cooked, encrypted, unowned, DRM-protected, or otherwise unauthorized inputs are 
 
 ## Security scope
 
-Vortex-Bevy is an offline CLI plus an optional Bevy 0.19 desktop viewer. It does not expose an HTTP server, connect to a database, or fetch URLs on the user's behalf. The attack surface is local-file ingestion (bounded per-format size caps, typed deserialization), local subprocess invocation (the authorized Unreal/Unity/Godot Editor through typed `Command::new(...).args(...)` adapters — no shell, no string concatenation), and the Bevy desktop window. Cryptography is limited to SHA-256 content hashing via `sha2`; there is no encryption, no RNG, and no network code path. Path traversal is prevented by systematic `canonicalize + starts_with(root)` confinement in 22 source files and the equivalent `_normalized + relative_to` check in the Python bridge. See [`docs/security_audit_t30.md`](docs/security_audit_t30.md) for the full audit.
+Vortex-Bevy is an offline CLI plus an optional Bevy 0.20 desktop viewer. It does not expose an HTTP server, connect to a database, or fetch URLs on the user's behalf. The attack surface is local-file ingestion (bounded per-format size caps, typed deserialization), local subprocess invocation (the authorized Unreal/Unity/Godot Editor through typed `Command::new(...).args(...)` adapters — no shell, no string concatenation), and the Bevy desktop window. Cryptography is limited to SHA-256 content hashing via `sha2`; there is no encryption, no RNG, and no network code path. Path traversal is prevented by systematic `canonicalize + starts_with(root)` confinement in 22 source files and the equivalent `_normalized + relative_to` check in the Python bridge. See [`docs/security_audit_t30.md`](docs/security_audit_t30.md) for the full audit.
 
 ## Workspace layout
 
 ```text
 crates/
 ├── vortex-core/  # Pure domain, application use cases, and adapter boundaries.
-└── vortex-bevy/  # CLI and Bevy 0.19 runtime composition.
+└── vortex-bevy/  # CLI and Bevy 0.20 runtime composition.
 bridges/          # Authorized Unreal, Unity, and Godot Editor export bridges.
 ```
 
@@ -40,7 +40,7 @@ Command/query handlers own only the narrow dependency trait they consume: inspec
 
 `scene.manifest.ron` is schema-versioned, bounded on read, canonicalized for stable ordering, and rejects unsafe artifact paths, duplicate source identities, malformed RON, and unknown schema versions. See [`docs/scene_manifest_contract.md`](docs/scene_manifest_contract.md).
 
-The Bevy 0.19 runtime verifies the manifest and GLB checksum before spawning `WorldAssetRoot`, then retains source provenance, classifications, diagnostics, variants, and artifact hash on the root entity. See [`docs/bevy_runtime_loading_contract.md`](docs/bevy_runtime_loading_contract.md). Runtime roots have explicit inspection, unload, and reload operations that preserve a data-driven viewer boundary; see [`docs/runtime_scene_lifecycle_contract.md`](docs/runtime_scene_lifecycle_contract.md). The local `bevy_egui` inspector queues lifecycle actions and shares a clipped native 3D viewport: right drag orbits, middle drag pans, the wheel zooms, and **F** or **Frame** fits the selected verified root. Pointer-owned UI input is gated, and the camera disables if panels leave no usable viewport. See [`docs/bevy_egui_viewer_contract.md`](docs/bevy_egui_viewer_contract.md).
+The Bevy 0.20 runtime verifies the manifest and GLB checksum before spawning `WorldAssetRoot`, then retains source provenance, classifications, diagnostics, variants, and artifact hash on the root entity. See [`docs/bevy_runtime_loading_contract.md`](docs/bevy_runtime_loading_contract.md). Runtime roots have explicit inspection, unload, and reload operations that preserve a data-driven viewer boundary; see [`docs/runtime_scene_lifecycle_contract.md`](docs/runtime_scene_lifecycle_contract.md). The local `bevy_egui` inspector queues lifecycle actions and shares a clipped native 3D viewport: right drag orbits, middle drag pans, the wheel zooms, and **F** or **Frame** fits the selected verified root. Pointer-owned UI input is gated, and the camera disables if panels leave no usable viewport. See [`docs/bevy_egui_viewer_contract.md`](docs/bevy_egui_viewer_contract.md).
 
 ## Typed CLI and Unreal metadata preflight
 

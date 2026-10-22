@@ -1,6 +1,6 @@
 # View a published conversion
 
-The `view` subcommand is reserved for the Bevy 0.19 desktop viewer. It
+The `view` subcommand is reserved for the Bevy 0.20 desktop viewer. It
 opens the published manifest + GLB in a native window with a
 `bevy_egui` overlay for source inspection, scene lifecycle, and
 diagnostics.

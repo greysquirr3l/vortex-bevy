@@ -242,7 +242,7 @@ fn authorized_real_unreal_static_scene_is_published_and_loaded() -> Result<(), B
             package.labels.clone(),
         )],
         CompatibilityRequirements {
-            minimum_bevy_version: "0.19".to_owned(),
+            minimum_bevy_version: "0.20".to_owned(),
             required_capabilities: BTreeSet::from([CompatibilityCapability::BevyGltfPbr]),
         },
     )?;

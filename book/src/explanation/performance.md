@@ -24,7 +24,7 @@ benchmarks in `crates/vortex-core/benches/core_pipeline.rs` and
 - Texture normalization.
 - GLB packaging.
 - Manifest parsing.
-- Headless Bevy 0.19 app construction.
+- Headless Bevy 0.20 app construction.
 - Headless Bevy manifest verification.
 - Headless Bevy scene spawn.
 

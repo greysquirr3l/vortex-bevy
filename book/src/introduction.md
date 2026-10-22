@@ -1,7 +1,7 @@
 # Introduction
 
 Vortex-Bevy converts **authorized** Unreal Engine source-project assets and
-selected OpenUSD stages into deterministic Bevy 0.19 runtime artifacts. The
+selected OpenUSD stages into deterministic Bevy 0.20 runtime artifacts. The
 output is a Bevy-compatible GLB plus a versioned `scene.manifest.ron` sidecar
 that records source identity, selected configuration, conversion
 classification, and diagnostics.
@@ -32,7 +32,7 @@ workspace for authorized source content. It:
   the matching Unreal Editor,
 - packages authorized Unity URP static-scene exports produced by the
   matching Unity Editor,
-- loads and renders the resulting GLBs in a Bevy 0.19 desktop viewer.
+- loads and renders the resulting GLBs in a Bevy 0.20 desktop viewer.
 
 It is **not** a general-purpose `.uasset` / `.unity` / `.tscn` /
 `.usd` decoder. It does not bypass encryption, guess keys, or claim
@@ -52,7 +52,7 @@ inputs are rejected by default. The tool refuses to bypass access controls.
 
 ## Security scope
 
-Vortex-Bevy is an offline CLI plus an optional Bevy 0.19 desktop viewer. It
+Vortex-Bevy is an offline CLI plus an optional Bevy 0.20 desktop viewer. It
 does not expose an HTTP server, connect to a database, or fetch URLs on the
 user's behalf. The attack surface is local-file ingestion (with per-format
 size caps and typed deserialization), local subprocess invocation (the

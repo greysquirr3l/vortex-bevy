@@ -16,8 +16,8 @@ repository = "https://github.com/greysquirr3l/vortex-bevy"
 
 [workspace.dependencies]
 anyhow = "1.0.100"
-bevy = { version = "0.19", default-features = false }
-bevy_egui = "0.42.0"
+bevy = { version = "0.20", default-features = false }
+bevy_egui = "0.43.1"
 clap = { version = "4.6.6", features = ["derive"] }
 criterion = "0.5.1"
 stats_alloc = "0.1.10"

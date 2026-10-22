@@ -32,7 +32,7 @@ fn source(suffix: &str) -> Result<ManifestSource, Box<dyn Error>> {
 
 fn compatibility() -> CompatibilityRequirements {
     CompatibilityRequirements {
-        minimum_bevy_version: "0.19".to_owned(),
+        minimum_bevy_version: "0.20".to_owned(),
         required_capabilities: BTreeSet::from([CompatibilityCapability::BevyGltfPbr]),
     }
 }

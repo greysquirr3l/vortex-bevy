@@ -56,7 +56,7 @@ fn support_matrix_returns_a_machine_readable_typed_report() -> Result<(), Box<dy
         CliReport::SupportMatrix { entries } => {
             let expected = BTreeSet::from([
                 "artifact.atomic_publication",
-                "bevy.0_19_verified_runtime",
+                "bevy.0_20_verified_runtime",
                 "e2e.authorized_unity_urp_static_scene",
                 "e2e.authorized_unreal_static_scene",
                 "e2e.synthetic_unity_urp_fixture",

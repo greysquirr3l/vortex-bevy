@@ -20,4 +20,4 @@ The inspection structures are plain owned models rather than UI state or convers
 
 ## Test Contract
 
-Headless runtime tests load a self-authored GLB through Bevy 0.19, verify the named child node and Vortex provenance root, inspect an intentionally unsupported classification and visible diagnostic, reload to generation one, reject an unrelated entity, and finally unload without leaving a Vortex root in the world.
+Headless runtime tests load a self-authored GLB through Bevy 0.20, verify the named child node and Vortex provenance root, inspect an intentionally unsupported classification and visible diagnostic, reload to generation one, reject an unrelated entity, and finally unload without leaving a Vortex root in the world.

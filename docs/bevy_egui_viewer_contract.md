@@ -1,6 +1,6 @@
 # bevy_egui Viewer Contract
 
-The Vortex runtime uses `bevy_egui` **0.42.0** with Bevy **0.19** for its local scene-lifecycle inspector. Bevy remains responsible for the viewport, asset pipeline, dynamic glTF worlds, and runtime lifecycle. The UI only renders typed state and queues explicit lifecycle commands; it never embeds conversion handlers or source-format decoders.
+The Vortex runtime uses `bevy_egui` **0.43.1** with Bevy **0.20** for its local scene-lifecycle inspector. Bevy remains responsible for the viewport, asset pipeline, dynamic glTF worlds, and runtime lifecycle. The UI only renders typed state and queues explicit lifecycle commands; it never embeds conversion handlers or source-format decoders.
 
 ## Viewer layout
 
@@ -20,7 +20,7 @@ The headless runtime integration suite proves selection refresh, detached inspec
 
 ## References
 
-- [bevy_egui 0.42.0 README](https://docs.rs/crate/bevy_egui/latest/source/README.md)
+- [bevy_egui 0.43.1 README](https://docs.rs/crate/bevy_egui/latest/source/README.md)
 - [bevy_egui side panel example](https://github.com/vladbat00/bevy_egui/blob/v0.42.0/examples/side_panel.rs)
 
 ## Native desktop viewport

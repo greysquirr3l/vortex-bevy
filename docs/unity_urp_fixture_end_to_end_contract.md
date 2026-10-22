@@ -10,7 +10,7 @@ T23 verifies the owned Unity URP fixture path in normal CI without invoking Unit
 | Material mapping | `UrpMaterialMapper` maps exact Lit and Unlit shader identities into canonical PBR materials. The fixture asserts opaque alpha behavior and the unlit roughness convention. |
 | Canonical package | The source links retain typed Unity object identity and project facts. A self-authored canonical mesh references both mapped material records; repeated package calls yield equal GLB bytes and checksum. |
 | Publication | The root-confined atomic store publishes the manifest and GLB, then reuses the same conversion on deterministic replay. The manifest records the Unity Editor version, URP package version, Force Text mode, and supported material matrix. |
-| Runtime | The Bevy 0.19 runtime verifies the published conversion before loading. Headless glTF spawning retains `VortexSceneRoot` and yields at least two `MeshMaterial3d<StandardMaterial>` resources. |
+| Runtime | The Bevy 0.20 runtime verifies the published conversion before loading. Headless glTF spawning retains `VortexSceneRoot` and yields at least two `MeshMaterial3d<StandardMaterial>` resources. |
 | Failure behavior | A Shader Graph material remains an explicit `unsupported` source record, malformed serialized input returns `BinaryOrUnknownSerialization`, and post-publication GLB tampering produces `VortexRuntimeDiagnostic` without a Vortex scene root. |
 
 ## Compatibility Matrix

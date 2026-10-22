@@ -4,7 +4,23 @@ all-features = true
 [advisories]
 version = 2
 yanked = "deny"
-ignore = []
+# Each entry must record why the affected code cannot be reached in this build and
+# what upstream change removes the need for it. Re-check on every dependency bump.
+ignore = [
+    # RUSTSEC-2026-0344 — decompression bomb in `ruzstd` 0.8.3.
+    #
+    # `bevy_egui` requests `bevy_image/zstd_rust`, which pulls `ruzstd` into the
+    # graph. `ruzstd` is only *called* from `bevy_image::ktx2`, gated behind the
+    # `bevy_image/ktx2` feature. Nothing here enables that feature, so the
+    # vulnerable decoder is not compiled in; `nm` over the built
+    # `libbevy_image-*.rlib` and the linked binary report zero `ruzstd` symbols.
+    # This workspace also never decodes zstd; textures are normalized to PNG.
+    #
+    # The fix (ruzstd 0.9.1) conflicts with bevy_image 0.20.0's `^0.8.0`
+    # requirement and cannot be selected. Drop this entry once Bevy bumps
+    # `ruzstd` to >=0.9.1. Mirrored in `.cargo/audit.toml` for `cargo audit`.
+    { id = "RUSTSEC-2026-0344", reason = "ruzstd is compiled but unreachable: its only caller, bevy_image::ktx2, sits behind the disabled bevy_image/ktx2 feature. Fix requires bevy_image to allow ruzstd >=0.9.1." },
+]
 
 [licenses]
 version = 2

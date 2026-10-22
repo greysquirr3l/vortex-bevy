@@ -45,7 +45,7 @@ pub fn verify_manifest(manifest_path: &Path) -> Result<VerifiedVortexArtifact> {
         .with_context(|| format!("cannot read manifest {}", manifest_path.display()))?;
     let manifest = SceneManifest::from_ron(&manifest_bytes, DEFAULT_MANIFEST_LIMIT_BYTES)
         .context("manifest contract validation failed")?;
-    ensure_bevy_019(&manifest.compatibility.minimum_bevy_version)?;
+    ensure_bevy_020(&manifest.compatibility.minimum_bevy_version)?;
     ensure_supported_capabilities(&manifest.compatibility.required_capabilities)?;
 
     let glb = declared_initial_glb(&manifest)?;
@@ -98,12 +98,12 @@ fn declared_initial_glb(
         .ok_or_else(|| anyhow!("manifest declares no GLB artifact"))
 }
 
-fn ensure_bevy_019(version: &str) -> Result<()> {
+fn ensure_bevy_020(version: &str) -> Result<()> {
     let mut parts = version.trim().split('.');
     let major = parts.next().unwrap_or_default();
     let minor = parts.next().unwrap_or_default();
-    if (major, minor) != ("0", "19") {
-        bail!("manifest requires Bevy {version}, but this runtime supports Bevy 0.19");
+    if (major, minor) != ("0", "20") {
+        bail!("manifest requires Bevy {version}, but this runtime supports Bevy 0.20");
     }
     Ok(())
 }

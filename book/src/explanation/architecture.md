@@ -15,7 +15,7 @@ For the architecture audit, see
 crates/
 ├── vortex-core/  # Pure domain, application commands and queries,
 │                  # and concrete adapter boundaries.
-└── vortex-bevy/  # CLI and Bevy 0.19 runtime composition.
+└── vortex-bevy/  # CLI and Bevy 0.20 runtime composition.
 ```
 
 `vortex-core` contains the conversion domain (typed value objects,
@@ -25,7 +25,7 @@ boundaries that consume source formats and publish artifacts. It has no
 dependency on Bevy, the filesystem, subprocess management, or any
 source SDK.
 
-`vortex-bevy` contains the typed CLI surface and the Bevy 0.19 runtime
+`vortex-bevy` contains the typed CLI surface and the Bevy 0.20 runtime
 composition: `bevy_egui` overlay, asset loader, scene lifecycle, and
 viewer camera. It consumes `vortex-core` through its public API only.
 
@@ -160,7 +160,7 @@ equals same ID, so compatibility is unambiguous.
 
 ## Bevy runtime composition
 
-`vortex-bevy/src/runtime/mod.rs` builds a headless-capable Bevy 0.19
+`vortex-bevy/src/runtime/mod.rs` builds a headless-capable Bevy 0.20
 application configured to load assets from one directory. The
 runtime registers the standard reflected components emitted by
 dynamic glTF worlds (transform, visibility, hierarchy, name components,
