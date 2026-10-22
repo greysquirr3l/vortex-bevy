@@ -4,6 +4,10 @@ All notable repository changes are documented here. Versioning follows the suppo
 
 ## Unreleased
 
+## 0.1.0 - 2026-10-22
+
+The first full release. The runtime and CLI target Bevy 0.20, generated manifests declare `minimum_bevy_version: "0.20"`, and the runtime refuses a manifest that declares any other version.
+
 ### Added
 
 - An optional caller-owned in-process queue for explicitly selected local `.usda` and `.usda.gz` stage requests.
