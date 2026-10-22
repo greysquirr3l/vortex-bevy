@@ -32,6 +32,8 @@ All notable repository changes are documented here. Versioning follows the suppo
 
 - `vortex-bevy view` exits cleanly with `classification: converted` on macOS 26 (Tahoe) without opening a native window because Bevy transitively pins winit 0.30.13 and winit 0.30.x's `-[NSApplication run]` returns immediately on hosts without an explicit foreground GUI session. The published GLB, manifest, and atomic publication are unaffected. The fix lands upstream in winit 0.31, which Bevy has not adopted yet. Tracked in [#7](https://github.com/greysquirr3l/vortex-bevy/issues/7). On Linux / Windows / macOS ≤ 15 the native viewer window opens normally.
 - `valid_recovery_commands_return_explicit_typed_reports` boundary test panicked when the CLI requested the default stage selection; aligned with the `validate_selection` change above.
+- The Quality CI job failed to compile on every platform because `docs/compatibility_matrix.json` was gitignored while `cli_boundary.rs` asserts against it with `include_str!`. A test cannot compile against an ignored path, so the file built locally and failed on any clean checkout. The file is the authoritative machine-readable snapshot of `vortex-bevy support-matrix --format json`, so it is tracked again; the book chapter remains the curated human summary.
+- The Authorized Editor bridge CI job failed before running a single check because gdtoolkit 4.2.2 imports `pkg_resources`, which setuptools 81 removed and Python 3.12 no longer bundles. setuptools is now pinned below 81 in the CI lint-tool install. gdtoolkit stays on 4.2.2 because 4.5.0 also reformats `bridges/godot/vortex_godot_bridge.gd`, so moving to it would mean reformatting the bridge in the same change.
 
 ### Security
 
