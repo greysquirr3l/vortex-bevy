@@ -162,7 +162,7 @@ run *args:
 #   - Linux:   target/release/bundle/{deb,rpm,appimage}/
 #
 # Each bundle wraps target/release/vortex-bevy with the platform-specific
-# metadata in crates/vortex-bevy/Cargo.toml ([package.metadata.bundle]).
+# metadata in crates/vortex-bevy/Cargo.toml ([package.metadata.bundle.bin.vortex-bevy]).
 bundle:
     cargo build --release --bin vortex-bevy -p vortex-bevy
     cargo bundle --release --bin vortex-bevy -p vortex-bevy
