@@ -6,10 +6,37 @@ use std::{
 };
 
 use anyhow::{Context, Result, anyhow, bail};
-use vortex_core::domain::{
-    ArtifactHash, CompatibilityCapability, DEFAULT_MANIFEST_LIMIT_BYTES, ManifestArtifactKind,
-    PackagedSceneMode, SceneManifest,
+use vortex_core::{
+    adapters::secondary::artifact_store::AtomicArtifactStore,
+    domain::{
+        ArtifactHash, CompatibilityCapability, ConversionId, DEFAULT_MANIFEST_LIMIT_BYTES,
+        ManifestArtifactKind, PackagedSceneMode, SceneManifest,
+    },
 };
+
+/// Resolves the directory a published conversion's assets are served from.
+///
+/// A manifest declares its artifacts relative to the conversion directory
+/// that owns it, so the Bevy asset server's root has to be that directory.
+/// Pointing the asset server at the artifact root instead makes every
+/// relative artifact path resolve to a file that does not exist.
+///
+/// # Errors
+///
+/// Returns an error when the conversion's published manifest cannot be
+/// resolved beneath the store's root, or when that manifest has no parent
+/// directory.
+pub fn published_conversion_asset_root(
+    store: &AtomicArtifactStore,
+    conversion_id: &ConversionId,
+) -> Result<PathBuf> {
+    let manifest_path = store
+        .published_manifest_path(conversion_id)
+        .with_context(|| format!("cannot resolve published manifest for {conversion_id}"))?;
+    manifest_path.parent().map(Path::to_path_buf).ok_or_else(|| {
+        anyhow!("published manifest {} has no parent directory", manifest_path.display())
+    })
+}
 
 /// A Vortex artifact verified before it is handed to Bevy's asset pipeline.
 #[derive(Clone, Debug)]

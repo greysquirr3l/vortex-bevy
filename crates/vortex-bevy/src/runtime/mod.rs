@@ -7,6 +7,7 @@ mod lifecycle;
 mod manifest;
 mod packages;
 mod viewer;
+mod window_probe;
 
 use std::{collections::BTreeMap, path::Path};
 
@@ -54,7 +55,7 @@ pub use inspection::{
 pub use lifecycle::{
     VortexSceneLifecycle, reload_scene, reload_scene_in_world, unload_scene, unload_scene_in_world,
 };
-pub use manifest::{VerifiedVortexArtifact, verify_manifest};
+pub use manifest::{VerifiedVortexArtifact, published_conversion_asset_root, verify_manifest};
 pub use packages::{
     load_packaged_chunk, load_packaged_chunk_in_world, switch_packaged_variant,
     switch_packaged_variant_in_world,
@@ -62,8 +63,16 @@ pub use packages::{
 pub use viewer::{
     ViewerCommand, ViewerCommandQueue, VortexViewerPlugin, VortexViewerState, update_viewer_state,
 };
+pub use window_probe::WindowProbe;
 
 /// Builds a headless-capable Bevy 0.20 application configured to load assets from one directory.
+///
+/// The windowing plugin is disabled so the app never opens a native event
+/// loop. That keeps the runtime usable on hosts without a desktop session
+/// and lets the test suite run without a display. The logger is disabled too,
+/// because a process that builds several apps cannot install Bevy's global
+/// log subscriber more than once. Use [`build_viewer_app`] for the
+/// interactive viewer.
 ///
 /// # Examples
 ///
@@ -74,8 +83,11 @@ pub use viewer::{
 pub fn build_runtime_app(asset_root: impl Into<String>) -> App {
     let mut app = App::new();
     app.add_plugins(
-        DefaultPlugins.set(AssetPlugin { file_path: asset_root.into(), ..Default::default() }).set(
-            WindowPlugin {
+        DefaultPlugins
+            .set(AssetPlugin { file_path: asset_root.into(), ..Default::default() })
+            .disable::<bevy_winit::WinitPlugin>()
+            .disable::<bevy::log::LogPlugin>()
+            .set(WindowPlugin {
                 primary_window: Some(Window {
                     title: "Vortex-Bevy Viewer".to_owned(),
                     resolution: WindowResolution::new(1_440, 900),
@@ -83,8 +95,7 @@ pub fn build_runtime_app(asset_root: impl Into<String>) -> App {
                     ..Default::default()
                 }),
                 ..Default::default()
-            },
-        ),
+            }),
     );
     app.register_type::<Transform>();
     app.register_type::<GlobalTransform>();
@@ -125,6 +136,12 @@ pub fn build_runtime_app(asset_root: impl Into<String>) -> App {
 }
 
 /// Builds the GUI Bevy 0.20 application used by the `view` CLI command.
+///
+/// This variant keeps Bevy's windowing plugin, so [`App::run`] drives a real
+/// event loop and opens a native window. The `bevy_winit` feature on the
+/// `bevy` dependency has to be enabled for `DefaultPlugins` to install it;
+/// without the feature the app falls back to Bevy's single-tick runner and
+/// never opens a window.
 ///
 /// Unlike [`build_runtime_app`], this constructor does **not** call
 /// `finish()` or `cleanup()` ahead of time. Bevy 0.20's

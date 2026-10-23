@@ -4,6 +4,19 @@ All notable repository changes are documented here. Versioning follows the suppo
 
 ## Unreleased
 
+### Fixed
+
+- `vortex-bevy view` never opened a native window on any platform. The `bevy_winit` feature was not enabled on the `bevy` dependency, so Bevy's `DefaultPlugins` did not install `WinitPlugin` and the viewer had no event loop at all: `App::run` fell back to Bevy's single-tick runner and returned immediately. The `bevy_winit` feature is now enabled, and the viewer opens a real window. The macOS 26 / winit 0.31 explanation in [#7](https://github.com/greysquirr3l/vortex-bevy/issues/7) was a misdiagnosis: winit 0.30.13 opens windows normally on macOS 26, and the Bevy 0.20 release that pinned it was never the problem.
+- `vortex-bevy view` reported `vortex.runtime.window_unavailable` for every host because the post-run window probe queried the caller's `App` after `App::run` had moved the world into the event loop, leaving that `App` empty. The probe now counts `Window` entities from inside the schedule and keeps the highest count it saw, so a window that was created and later closed still reports as created.
+- `vortex-bevy view` failed to load the published scene because the asset server root was the artifact root rather than the conversion directory that owns the manifest, so the manifest's relative GLB path resolved to a file that does not exist. The viewer now serves assets from the conversion directory.
+- The desktop viewer no longer fails to start when Bevy's default tonemapper is selected: the `tonemapping_luts` feature is enabled on the `bevy` dependency.
+- The `bevy_egui` overlay no longer warns that `PickingPlugin` is missing: the `bevy_picking` feature is enabled on the `bevy` dependency.
+
+### Added
+
+- Bevy's logger is enabled for the desktop viewer, so renderer, asset, and windowing diagnostics reach the operator instead of failing silently.
+- A typed `published_conversion_asset_root` helper that resolves the directory a published conversion's assets are served from.
+
 ## 0.1.0 - 2026-10-22
 
 The first full release. The runtime and CLI target Bevy 0.20, generated manifests declare `minimum_bevy_version: "0.20"`, and the runtime refuses a manifest that declares any other version.

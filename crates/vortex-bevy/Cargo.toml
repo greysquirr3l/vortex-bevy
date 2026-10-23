@@ -12,8 +12,15 @@ repository.workspace = true
 
 [dependencies]
 anyhow.workspace = true
-bevy = { workspace = true, features = ["bevy_asset", "bevy_scene", "bevy_gltf", "bevy_pbr", "png"] }
+# `bevy_winit` and `bevy_log` are required, not optional. Bevy's
+# `DefaultPlugins` only installs `WinitPlugin` and `LogPlugin` when the
+# matching features are enabled; without `bevy_winit` the viewer has no
+# event loop and never opens a native window. `build_runtime_app` calls
+# `disable::<WinitPlugin>()` and `disable::<LogPlugin>()`, which panic when
+# the plugin is absent from the group, so both features must stay enabled.
+bevy = { workspace = true, features = ["bevy_asset", "bevy_scene", "bevy_gltf", "bevy_pbr", "bevy_picking", "bevy_winit", "tonemapping_luts", "png", "bevy_log"] }
 bevy_egui.workspace = true
+bevy_winit.workspace = true
 clap.workspace = true
 serde.workspace = true
 serde_json.workspace = true

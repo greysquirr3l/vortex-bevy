@@ -4,10 +4,16 @@
 //! Commands whose downstream recovery task is not yet implemented report an explicit
 //! unavailable capability rather than guessing at a conversion result.
 
-use std::{ffi::OsString, path::PathBuf, process::ExitCode, str::FromStr};
+use std::{
+    ffi::OsString,
+    path::{Path, PathBuf},
+    process::ExitCode,
+    str::FromStr,
+};
 
 use crate::runtime::{
-    VortexRuntimeDiagnostic, build_viewer_app, load_published_conversion_or_diagnostic,
+    VortexRuntimeDiagnostic, WindowProbe, build_viewer_app,
+    load_published_conversion_or_diagnostic, published_conversion_asset_root,
 };
 use anyhow::{Context, Result, anyhow};
 use clap::{Args, Parser, Subcommand, ValueEnum};
@@ -29,9 +35,9 @@ use vortex_core::{
         },
     },
     domain::{
-        ArtifactHash, ClassificationKind, ConversionContext, DomainError, ExportProfileName,
-        OutputRoot, ProjectRoot, Remediation, SourceAssetPath, SourceIdentity, StageSelection,
-        UnityAssetGuid, UnityObjectId, UnrealObjectPath, UsdPrimPath,
+        ArtifactHash, ClassificationKind, ConversionContext, ConversionId, DomainError,
+        ExportProfileName, OutputRoot, ProjectRoot, Remediation, SourceAssetPath, SourceIdentity,
+        StageSelection, UnityAssetGuid, UnityObjectId, UnrealObjectPath, UsdPrimPath,
     },
 };
 
@@ -513,7 +519,15 @@ fn unavailable_view(arguments: &ViewArgs) -> Result<CliReport> {
         });
     };
 
-    let mut app = build_viewer_app(arguments.artifact_root.to_string_lossy().into_owned());
+    // The manifest declares its GLB relative to the conversion directory, and
+    // `verify_manifest` resolves it that way, so the asset server root must be
+    // the conversion directory rather than the artifact root that contains it.
+    let conversion_directory = published_conversion_asset_root(&store, &latest)
+        .with_context(|| format!("could not resolve the asset root for {}", latest.as_str()))?;
+
+    let probe = WindowProbe::new();
+    let mut app = build_viewer_app(conversion_directory.to_string_lossy().into_owned());
+    probe.install(&mut app);
     let diagnostic_entity = load_published_conversion_or_diagnostic(&mut app, &store, &latest);
     if app.world().entity(diagnostic_entity).get::<VortexRuntimeDiagnostic>().is_some() {
         // Artifact failed to load. Run a short tick loop so the diagnostic
@@ -542,54 +556,60 @@ fn unavailable_view(arguments: &ViewArgs) -> Result<CliReport> {
     );
     println!("opening Bevy viewer; close the window to exit");
 
-    // Enter the Bevy event loop. App::run() blocks until the window closes;
-    // on macOS the winit event loop only stays open when the process has a
-    // foreground GUI session. If winit cannot open a window, App::run
-    // returns AppExit::Success immediately. We probe for the primary window
-    // and surface a typed diagnostic if no window was created.
+    // Enter the Bevy event loop. App::run() blocks until the window closes.
+    // The probe observes window creation from inside the schedule, because
+    // App::run() moves the world into the event loop and leaves this `app`
+    // empty, so a query over it after the fact would always report zero.
     app.run();
 
-    // Diagnostic: did winit actually create a window?
-    let window_count = {
-        let mut query = app.world_mut().query::<&bevy::window::Window>();
-        query.iter(app.world()).count()
-    };
-    if window_count == 0 {
-        let reason = format!(
-            "vortex-bevy: viewer exited without creating a native window. \
-             On macOS 26 (Tahoe) winit 0.30.13 (transitively pinned by Bevy 0.20) \
-             calls -[NSApplication run] which returns immediately on hosts \
-             without an explicit foreground GUI session, so no native window \
-             is created. The fix is tracked upstream in winit 0.31, which \
-             Bevy has not adopted yet. Until it ships, the native viewer window \
-             is unavailable on macOS 26 -- the conversion, manifest, and \
-             atomic publication remain intact and can be inspected at {} \
-             with `vortex-bevy verify --conversion-id {}`.",
-            arguments.artifact_root.display(),
-            latest
-        );
+    let window_count = probe.observed_window_count();
+    let report = viewer_window_report(&latest, &arguments.artifact_root, window_count);
+    if let CliReport::Convert { reason, .. } = &report
+        && window_count == 0
+    {
         eprintln!("{reason}");
+    }
+    Ok(report)
+}
 
-        return Ok(CliReport::Convert {
-            conversion_id: latest.as_str().to_owned(),
+/// Builds the typed report for a viewer session that has ended.
+///
+/// `window_count` is the number of native windows the viewer observed while
+/// the event loop was running. A count of zero means the platform windowing
+/// backend never produced a window.
+pub fn viewer_window_report(
+    conversion_id: &ConversionId,
+    artifact_root: &Path,
+    window_count: usize,
+) -> CliReport {
+    if window_count == 0 {
+        return CliReport::Convert {
+            conversion_id: conversion_id.as_str().to_owned(),
             source: "<artifact-root>".to_owned(),
             action: "executed".to_owned(),
             classification: "converted".to_owned(),
-            reason,
-            remediation: format!(
-                "Native viewer window unavailable on macOS 26 until winit 0.31 \
-                 ships and Bevy adopts it. Use `vortex-bevy verify --conversion-id {} \
-                 --artifact-root {}` to inspect the published GLB + manifest, \
-                 or run the binary on Linux / Windows / macOS <= 15 to see the \
-                 native viewer window.",
-                latest,
-                arguments.artifact_root.display(),
+            reason: format!(
+                "vortex-bevy: viewer exited without creating a native window. \
+                 The published conversion {conversion_id} loaded, but the platform \
+                 windowing backend did not produce a window before the event loop \
+                 ended. The conversion, manifest, and atomic publication remain \
+                 intact and can be inspected at {artifact_root} with \
+                 `vortex-bevy verify --conversion-id {conversion_id}`.",
+                artifact_root = artifact_root.display(),
             ),
-        });
+            remediation: format!(
+                "The native viewer window could not be created on this host. \
+                 Use `vortex-bevy verify --conversion-id {conversion_id} \
+                 --artifact-root {artifact_root}` to inspect the published GLB + \
+                 manifest, or run the binary on a host with an available desktop \
+                 session.",
+                artifact_root = artifact_root.display(),
+            ),
+        };
     }
 
-    Ok(CliReport::Convert {
-        conversion_id: latest.as_str().to_owned(),
+    CliReport::Convert {
+        conversion_id: conversion_id.as_str().to_owned(),
         source: "<artifact-root>".to_owned(),
         action: "executed".to_owned(),
         classification: "converted".to_owned(),
@@ -598,7 +618,7 @@ fn unavailable_view(arguments: &ViewArgs) -> Result<CliReport> {
             "Press F (or use the Frame toolbar action) to fit the camera; right-drag to orbit; \
              middle-drag to pan; wheel to zoom. Close the window to exit."
                 .to_owned(),
-    })
+    }
 }
 
 fn validate_conversion_arguments(arguments: &ConversionArgs) -> Result<()> {

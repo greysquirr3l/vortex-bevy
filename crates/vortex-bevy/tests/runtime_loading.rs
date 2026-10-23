@@ -17,7 +17,8 @@ use vortex_bevy::runtime::{
     VortexDiagnosticSet, VortexRuntimeDiagnostic, VortexSceneLifecycle, VortexSceneRoot,
     VortexSourceLink, VortexVariantSelection, VortexViewerState, build_runtime_app, inspect_scene,
     load_manifest_and_spawn, load_published_conversion_and_spawn,
-    load_published_conversion_or_diagnostic, reload_scene, unload_scene, verify_manifest,
+    load_published_conversion_or_diagnostic, published_conversion_asset_root, reload_scene,
+    unload_scene, verify_manifest,
 };
 use vortex_core::{
     adapters::secondary::artifact_store::{
@@ -253,6 +254,26 @@ fn atomically_published_conversion_verifies_before_spawn_and_corruption_becomes_
     fs::write(asset_root.join("scene.glb"), b"corrupt published artifact")?;
     let diagnostic = load_published_conversion_or_diagnostic(&mut app, &store, &id);
     assert!(app.world().entity(diagnostic).contains::<VortexRuntimeDiagnostic>());
+    fs::remove_dir_all(root)?;
+    Ok(())
+}
+
+#[test]
+fn published_conversion_resolves_its_conversion_directory_as_asset_root()
+-> Result<(), Box<dyn Error>> {
+    let root = fixture_root("t20-runtime-asset-root");
+    reset_root(&root)?;
+    let (store, id) = publish_runtime_fixture(&root)?;
+
+    // A manifest declares its artifacts relative to the conversion directory
+    // that owns it, so the asset server root has to be that directory. The
+    // artifact root contains the conversion directory and cannot resolve the
+    // relative path.
+    let asset_root = published_conversion_asset_root(&store, &id)?;
+    assert_eq!(asset_root, root.join(id.as_str()));
+    assert!(asset_root.join("scene.glb").is_file());
+    assert!(!root.join("scene.glb").is_file());
+
     fs::remove_dir_all(root)?;
     Ok(())
 }

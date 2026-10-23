@@ -1,14 +1,14 @@
 # Build a platform bundle
 
-The Bevy viewer window needs a foreground GUI session to open. On
-macOS that's an `.app` bundle (so AppKit grants a foreground window
+The Bevy viewer window needs a windowing session to open. On macOS
+that's an `.app` bundle (so AppKit grants a foreground window
 policy); on Windows that's a self-contained `.exe` built directly by `cargo build --release` (cargo-bundle's Windows MSI emitter has known hyphen-binary bugs and its exe emitter requires a resource directory rustc doesn't emit — both intentionally avoided; see GitHub burtonageo/cargo-bundle#77 and #221); on Linux it's
-`.desktop` + icon at the XDG paths. A bare `cargo run` from a
-non-foreground shell can't open a Bevy window — you'll see the typed
-report printed and the process exits silently.
+`.desktop` + icon at the XDG paths. On Linux the process also needs a
+reachable X11 or Wayland display; without one the windowing backend
+cannot start at all.
 
 This page covers building the platform-native bundle that gives the
-viewer the foreground session it needs.
+viewer the session it needs.
 
 ## Prerequisites
 

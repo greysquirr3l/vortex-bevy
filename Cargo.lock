@@ -930,6 +930,7 @@ dependencies = [
  "guillotiere",
  "half",
  "image",
+ "ktx2",
  "rectangle-pack",
  "ruzstd",
  "serde",
@@ -995,10 +996,12 @@ dependencies = [
  "bevy_image",
  "bevy_input",
  "bevy_light",
+ "bevy_log",
  "bevy_material",
  "bevy_math",
  "bevy_mesh",
  "bevy_pbr",
+ "bevy_picking",
  "bevy_platform",
  "bevy_ptr",
  "bevy_reflect",
@@ -1011,6 +1014,7 @@ dependencies = [
  "bevy_transform",
  "bevy_utils",
  "bevy_window",
+ "bevy_winit",
  "bevy_world_serialization",
 ]
 
@@ -3381,6 +3385,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ktx2"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1d50be8a24c37debdf3170be6ca396d5b5b165f37f94837891adac735ca416b8"
+dependencies = [
+ "bitflags 2.13.1",
+]
+
+[[package]]
 name = "kurbo"
 version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5473,6 +5486,7 @@ dependencies = [
  "anyhow",
  "bevy",
  "bevy_egui",
+ "bevy_winit",
  "clap",
  "criterion",
  "serde",
