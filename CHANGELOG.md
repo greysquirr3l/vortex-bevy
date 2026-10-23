@@ -4,7 +4,15 @@ All notable repository changes are documented here. Versioning follows the suppo
 
 ## Unreleased
 
+### Changed
+
+- Every GitHub Action is now pinned to a commit SHA on a Node 24 release. The previous pins targeted Node 20 actions, and GitHub removed the Node 20 runtime from hosted runners on 2026-09-16, so the workflows could not start. `actions/checkout` moves to v7.0.1, `actions/setup-python` to v7.1.0, `actions/setup-dotnet` to v6.0.0, `gitleaks/gitleaks-action` to v3.0.0, `github/codeql-action` to v4.39.1, `actions/upload-artifact` to v7.0.2, `actions/download-artifact` to v8.0.2, `actions/upload-pages-artifact` to v5.0.0, `actions/deploy-pages` to v5.0.1, and `actions/configure-pages` to v6.0.0. `softprops/action-gh-release` was already pinned to v3.0.3; only its version comment was wrong.
+- The book deployment opts back into hidden files for the Pages artifact. `actions/upload-pages-artifact` v4 stopped shipping them by default, but mdbook writes `.nojekyll` into the build directory to tell GitHub Pages to skip Jekyll processing.
+- The Dependabot open pull request limit is raised from five to ten for both the Cargo and GitHub Actions ecosystems. The previous limit saturated the queue, so the remaining outdated dependencies were never offered.
+
 ### Fixed
+
+- `actions/checkout` in the book workflow was referenced by a floating version tag instead of a commit SHA, unlike every other action in the repository.
 
 - `vortex-bevy view` never opened a native window on any platform. The `bevy_winit` feature was not enabled on the `bevy` dependency, so Bevy's `DefaultPlugins` did not install `WinitPlugin` and the viewer had no event loop at all: `App::run` fell back to Bevy's single-tick runner and returned immediately. The `bevy_winit` feature is now enabled, and the viewer opens a real window. The macOS 26 / winit 0.31 explanation in [#7](https://github.com/greysquirr3l/vortex-bevy/issues/7) was a misdiagnosis: winit 0.30.13 opens windows normally on macOS 26, and the Bevy 0.20 release that pinned it was never the problem.
 - `vortex-bevy view` reported `vortex.runtime.window_unavailable` for every host because the post-run window probe queried the caller's `App` after `App::run` had moved the world into the event loop, leaving that `App` empty. The probe now counts `Window` entities from inside the schedule and keeps the highest count it saw, so a window that was created and later closed still reports as created.

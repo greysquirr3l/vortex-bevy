@@ -36,6 +36,13 @@ than the older `gh-pages` branch approach. There is no separate branch
 to manage — the deployment state lives entirely in GitHub's Pages
 infrastructure.
 
+The Pages upload opts into hidden files. mdbook writes a `.nojekyll`
+file into `book/build/` to tell GitHub Pages to serve the site without
+running it through Jekyll, and `actions/upload-pages-artifact` stopped
+shipping hidden files by default in v4. Without `include-hidden-files`,
+that marker would be dropped from the artifact and the deployed site
+would be processed by Jekyll.
+
 ## Triggers
 
 The workflow runs on:
