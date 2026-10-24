@@ -4,8 +4,14 @@ All notable repository changes are documented here. Versioning follows the suppo
 
 ## Unreleased
 
+### Changed
+
+- `sha2` moves to 0.11.1, `ron` to 0.12.2, `criterion` to 0.8.2, `flate2` to 1.1.10, and `clap` to 4.6.7. These consolidate the five open Dependabot pull requests into one change. `sha2` 0.11 returns its digest as a `hybrid_array::Array`, which has no `LowerHex` implementation, so artifact and conversion hashes are now encoded by a local helper instead of `format!("{digest:x}")`. The encoding is byte-for-byte identical and is pinned to published SHA-256 vectors by a test. `criterion` 0.6 deprecated `criterion::black_box` in favour of `std::hint::black_box`, so the benchmarks use the standard library function.
+- `clipboard-win` moves to 5.4.3. Version 5.4.1 was yanked upstream, which failed `cargo deny --all-features check`. The public API is unchanged and `arboard`'s `^5.3.1` requirement is satisfied.
+
 ### Fixed
 
+- The documentation contract failed on a clean checkout because four tracked files linked to `docs/performance_baseline.md`, `docs/release_hardening.md`, and `docs/operations_and_architecture_guide.md`. Those files are gitignored and untracked, so they are present on a developer machine and absent from CI. The links now point at the book chapters and the tracked contracts that replaced them. The contract also failed on eighteen book chapters whose relative links resolved one directory too high, and on one chapter that linked `./reference/cli.md` instead of `../reference/cli.md`.
 - `vortex-bevy view` never opened a native window on any platform. The `bevy_winit` feature was not enabled on the `bevy` dependency, so Bevy's `DefaultPlugins` did not install `WinitPlugin` and the viewer had no event loop at all: `App::run` fell back to Bevy's single-tick runner and returned immediately. The `bevy_winit` feature is now enabled, and the viewer opens a real window. The macOS 26 / winit 0.31 explanation in [#7](https://github.com/greysquirr3l/vortex-bevy/issues/7) was a misdiagnosis: winit 0.30.13 opens windows normally on macOS 26, and the Bevy 0.20 release that pinned it was never the problem.
 - `vortex-bevy view` reported `vortex.runtime.window_unavailable` for every host because the post-run window probe queried the caller's `App` after `App::run` had moved the world into the event loop, leaving that `App` empty. The probe now counts `Window` entities from inside the schedule and keeps the highest count it saw, so a window that was created and later closed still reports as created.
 - `vortex-bevy view` failed to load the published scene because the asset server root was the artifact root rather than the conversion directory that owns the manifest, so the manifest's relative GLB path resolved to a file that does not exist. The viewer now serves assets from the conversion directory.
@@ -16,6 +22,7 @@ All notable repository changes are documented here. Versioning follows the suppo
 
 - Bevy's logger is enabled for the desktop viewer, so renderer, asset, and windowing diagnostics reach the operator instead of failing silently.
 - A typed `published_conversion_asset_root` helper that resolves the directory a published conversion's assets are served from.
+- A test that pins the artifact hash encoding to published SHA-256 vectors, so the hand-rolled hexadecimal encoder cannot drift from the digest it replaces.
 
 ## 0.1.0 - 2026-10-22
 

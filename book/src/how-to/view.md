@@ -7,7 +7,7 @@ diagnostics.
 
 This page covers the viewer's contract and what it shows. The runtime
 side of the loading path is documented at
-[`docs/bevy_runtime_loading_contract.md`](../../docs/bevy_runtime_loading_contract.md).
+[`docs/bevy_runtime_loading_contract.md`](../../../docs/bevy_runtime_loading_contract.md).
 
 ## Status
 
@@ -111,6 +111,6 @@ a conservative radius.
 - [Build a platform bundle](./bundle.md) — wraps the binary in a
   platform-native `.app` / MSI / `.deb` so AppKit / win32 / X11 grant
   the windowing session the viewer needs.
-- [Reference: Bevy runtime loading contract](../../docs/bevy_runtime_loading_contract.md)
-- [Reference: bevy_egui viewer contract](../../docs/bevy_egui_viewer_contract.md)
-- [Reference: Runtime scene lifecycle contract](../../docs/runtime_scene_lifecycle_contract.md)
+- [Reference: Bevy runtime loading contract](../../../docs/bevy_runtime_loading_contract.md)
+- [Reference: bevy_egui viewer contract](../../../docs/bevy_egui_viewer_contract.md)
+- [Reference: Runtime scene lifecycle contract](../../../docs/runtime_scene_lifecycle_contract.md)

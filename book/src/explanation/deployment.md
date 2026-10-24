@@ -10,7 +10,7 @@ The latest version of this guide is rendered at
 <https://greysquirr3l.github.io/vortex-bevy/>. Every push to `main` that
 changes `book/src/` triggers a rebuild and redeploy.
 
-The site URL is set in [`book.toml`](../book.toml) under
+The site URL is set in [`book.toml`](../../book.toml) under
 `[output.html].site-url = "/vortex-bevy/"`. GitHub Pages serves the
 artifact at `<github-user>.github.io/<repo-name>/`, so the path prefix
 matches the repository name.

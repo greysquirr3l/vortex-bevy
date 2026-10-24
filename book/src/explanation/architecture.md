@@ -4,10 +4,8 @@ Vortex-Bevy is a two-crate Rust 1.97.1 workspace. The two crates
 deliberately split along a boundary that keeps the conversion pipeline
 free of Bevy, filesystem, subprocess, and source-SDK dependencies.
 
-For the contract-level architecture, see
-[`docs/operations_and_architecture_guide.md`](../../docs/operations_and_architecture_guide.md).
 For the architecture audit, see
-[`docs/integration_wiring_audit_t31.md`](../../docs/integration_wiring_audit_t31.md).
+[`docs/integration_wiring_audit_t31.md`](../../../docs/integration_wiring_audit_t31.md).
 
 ## Workspace layout
 

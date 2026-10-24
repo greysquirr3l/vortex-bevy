@@ -46,7 +46,7 @@ documents that intent rather than treating absence as a gap.
 | F-04 | Rate limiting middleware                         | —        | N/A        | No HTTP server in project.                                                                                                                                                                                                                  |
 | F-05 | File-upload MIME/extension/size validation       | Info     | Covered    | Local ingestion is bounded by per-format size caps; see §3.                                                                                                                                                                                 |
 | F-06 | SSRF — URL fetch on user behalf                  | —        | N/A        | No URL fetching anywhere in the codebase.                                                                                                                                                                                                   |
-| F-07 | Weak/broken cryptography                         | —        | N/A        | Only `sha2 = "0.10.9"` (SHA-256) for `ArtifactHash` checksums. No MD5, SHA-1, DES, AES, Blowfish, ECB.                                                                                                                                      |
+| F-07 | Weak/broken cryptography                         | —        | N/A        | Only `sha2 = "0.11.1"` (SHA-256) for `ArtifactHash` checksums. No MD5, SHA-1, DES, AES, Blowfish, ECB.                                                                                                                                      |
 | F-08 | Disabled TLS certificate verification            | —        | N/A        | No HTTP client in project.                                                                                                                                                                                                                  |
 | F-09 | `rand::thread_rng()` for crypto                  | —        | N/A        | Project is deterministic; no `rand` or `getrandom` dependency, zero call sites.                                                                                                                                                             |
 | F-10 | Unsafe deserialization                           | —        | N/A        | Only `serde_json`, `serde_derive`, `ron`, `gltf` — all safe-Rust crates. No `bincode`, `bson`, `postcard`.                                                                                                                                  |
@@ -165,7 +165,7 @@ project-provided scripts (`vortex_unreal_bridge.py` docstring:
 
 ## 6. Cryptography, RNG, deserialization (F-07, F-09, F-10)
 
-- **Hashing:** `sha2 = "0.10.9"` only — used by `ArtifactHash::from_bytes`
+- **Hashing:** `sha2 = "0.11.1"` only — used by `ArtifactHash::from_bytes`
   for content-addressable manifest verification. SHA-256, no MD5 or SHA-1.
 - **Encryption:** zero. No `aes`, `chacha20poly1305`, `argon2`, `bcrypt`,
   or `scrypt` dependencies. No IV/nonce generation, because no encryption.

@@ -6,7 +6,7 @@ fetch URLs on the user's behalf. The attack surface is local-file
 ingestion, local subprocess invocation, and the Bevy desktop window.
 
 This page summarizes the security model. The full audit is at
-[`docs/security_audit_t30.md`](../../docs/security_audit_t30.md).
+[`docs/security_audit_t30.md`](../../../docs/security_audit_t30.md).
 
 ## Threat model
 
@@ -153,7 +153,7 @@ stable code `vortex.runtime.artifact_rejected`.
 ## Audit findings
 
 The full audit at
-[`docs/security_audit_t30.md`](../../docs/security_audit_t30.md)
+[`docs/security_audit_t30.md`](../../../docs/security_audit_t30.md)
 covers 20 categories with no critical or high-severity findings.
 Notable items:
 

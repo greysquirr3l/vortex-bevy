@@ -4,11 +4,12 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     error::Error,
     fs,
+    hint::black_box,
     path::PathBuf,
     process,
 };
 
-use criterion::{BatchSize, Criterion, black_box};
+use criterion::{BatchSize, Criterion};
 use vortex_bevy::runtime::{build_runtime_app, load_manifest_and_spawn};
 use vortex_core::domain::{
     ArtifactHash, ClassificationKind, CompatibilityCapability, CompatibilityRequirements,

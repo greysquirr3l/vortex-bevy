@@ -102,7 +102,7 @@ time:
   canonicalization. A traversal is rejected.
 
 These are documented at
-[`docs/bevy_runtime_loading_contract.md`](../../docs/bevy_runtime_loading_contract.md)
+[`docs/bevy_runtime_loading_contract.md`](../../../docs/bevy_runtime_loading_contract.md)
 and exercised by the integration suite in `crates/vortex-bevy/tests/`.
 
 ## Where to go next
