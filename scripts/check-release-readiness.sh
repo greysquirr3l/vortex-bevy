@@ -16,6 +16,7 @@ bash scripts/check-documentation.sh
 bash scripts/check-fixture-policy.sh
 bash scripts/check-workflow-actions.sh
 bash scripts/test-workflow-actions.sh
+bash scripts/check-branch-protection.sh
 bash scripts/verify-fixtures.sh
 cargo deny --all-features check
 cargo audit --no-fetch

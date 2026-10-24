@@ -88,6 +88,39 @@ configure in `Settings > Pages`:
    `pages: write` and `id-token: write` (for OIDC token exchange with
    the Pages service).
 
+### Branch protection
+
+`main` requires six status checks and one approving review. The
+required checks are named after the CI job display names, not the job
+ids:
+
+| Required check | CI job |
+|---|---|
+| `Quality (ubuntu-latest)` | `quality` |
+| `Quality (macos-14)` | `quality` |
+| `Quality (windows-latest)` | `quality` |
+| `Supply chain and fixture policy` | `supply-chain` |
+| `Authorized Editor bridge quality` | `bridge-quality` |
+| `Secret scan` | `secret-scan` |
+
+GitHub Actions reports each job as a check run named after the job's
+`name` field, so a required check that uses the job id instead of the
+display name never matches a result. A check that never reports leaves
+the pull request blocked permanently, even when every job passes. When
+you rename a CI job, update the branch protection rule in the same
+change.
+
+The expected contexts are recorded in
+[`.github/branch-protection.json`](../../../.github/branch-protection.json).
+`scripts/check-branch-protection.sh` compares that record against the CI
+workflow and runs in the CI quality job and the release readiness
+script. Pass `--live` to also compare the record against the live rule,
+which needs a token with admin access to the repository.
+
+The rule is set to *strict*, so the checks must pass against the
+current head of `main`. Rebase before expecting the checks to go
+green.
+
 ## Adding a chapter
 
 To add a new chapter:
