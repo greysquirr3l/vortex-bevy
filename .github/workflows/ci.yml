@@ -49,6 +49,7 @@ jobs:
         # GITHUB_TOKEN cannot read branch protection, so this compares the
         # workflow against the recorded expectations.
         run: bash scripts/check-branch-protection.sh
+        run: exit 1
 
   bridge-quality:
     name: Authorized Editor bridge quality
