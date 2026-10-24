@@ -49,6 +49,7 @@ jobs:
         # GITHUB_TOKEN cannot read branch protection, so this compares the
         # workflow against the recorded expectations.
         run: bash scripts/check-branch-protection.sh
+      - name: Deliberate failure probe
         run: exit 1
 
   bridge-quality:
