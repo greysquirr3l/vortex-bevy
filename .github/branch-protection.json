@@ -1,0 +1,11 @@
+{
+  "branch": "main",
+  "required_status_checks": [
+    "Quality (ubuntu-latest)",
+    "Quality (macos-14)",
+    "Quality (windows-latest)",
+    "Supply chain and fixture policy",
+    "Authorized Editor bridge quality",
+    "Secret scan"
+  ]
+}

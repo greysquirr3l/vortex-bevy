@@ -36,6 +36,13 @@ than the older `gh-pages` branch approach. There is no separate branch
 to manage — the deployment state lives entirely in GitHub's Pages
 infrastructure.
 
+The Pages upload opts into hidden files. mdbook writes a `.nojekyll`
+file into `book/build/` to tell GitHub Pages to serve the site without
+running it through Jekyll, and `actions/upload-pages-artifact` stopped
+shipping hidden files by default in v4. Without `include-hidden-files`,
+that marker would be dropped from the artifact and the deployed site
+would be processed by Jekyll.
+
 ## Triggers
 
 The workflow runs on:
@@ -47,6 +54,26 @@ PRs to `main` do not trigger a deployment. PRs run the CI workflow
 (`.github/workflows/ci.yml`), which already runs
 `scripts/check-documentation.sh` and therefore builds and tests the
 book as part of the quality gate.
+
+## The workflow action contract
+
+The CI quality job also runs `scripts/check-workflow-actions.sh`. That
+script resolves the `action.yml` of every action the workflows pin and
+checks two things for each step:
+
+- Every key under `with:` names an input the action actually declares.
+- Every required input the action declares is supplied.
+
+`actionlint` covers workflow syntax, but it does not resolve remote
+actions, so it cannot catch either mistake. A wrong `with:` key is
+silently ignored by the action, and a missing required input fails the
+job only after the runner has already started. Both shipped undetected
+because the CI jobs had never actually run.
+
+The check caches each fetched `action.yml` under the system temporary
+directory, and `scripts/test-workflow-actions.sh` exercises the parsing
+rules against synthetic manifests so the contract is covered without
+network access.
 
 ## Required repository settings
 
@@ -60,6 +87,39 @@ configure in `Settings > Pages`:
    permissions. The workflow grants the deployment job
    `pages: write` and `id-token: write` (for OIDC token exchange with
    the Pages service).
+
+### Branch protection
+
+`main` requires six status checks and one approving review. The
+required checks are named after the CI job display names, not the job
+ids:
+
+| Required check | CI job |
+|---|---|
+| `Quality (ubuntu-latest)` | `quality` |
+| `Quality (macos-14)` | `quality` |
+| `Quality (windows-latest)` | `quality` |
+| `Supply chain and fixture policy` | `supply-chain` |
+| `Authorized Editor bridge quality` | `bridge-quality` |
+| `Secret scan` | `secret-scan` |
+
+GitHub Actions reports each job as a check run named after the job's
+`name` field, so a required check that uses the job id instead of the
+display name never matches a result. A check that never reports leaves
+the pull request blocked permanently, even when every job passes. When
+you rename a CI job, update the branch protection rule in the same
+change.
+
+The expected contexts are recorded in
+[`.github/branch-protection.json`](../../../.github/branch-protection.json).
+`scripts/check-branch-protection.sh` compares that record against the CI
+workflow and runs in the CI quality job and the release readiness
+script. Pass `--live` to also compare the record against the live rule,
+which needs a token with admin access to the repository.
+
+The rule is set to *strict*, so the checks must pass against the
+current head of `main`. Rebase before expecting the checks to go
+green.
 
 ## Adding a chapter
 

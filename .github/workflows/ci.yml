@@ -34,6 +34,13 @@ jobs:
         run: cargo install --locked mdbook --version 0.5.4
       - name: Documentation contract
         run: bash scripts/check-documentation.sh
+      - name: Branch protection contract
+        # The required status checks must name the CI job display names.
+        # A check that names a job id never reports a result, which leaves
+        # the pull request blocked even when every job passes. The default
+        # GITHUB_TOKEN cannot read branch protection, so this compares the
+        # workflow against the recorded expectations.
+        run: bash scripts/check-branch-protection.sh
 
   bridge-quality:
     name: Authorized Editor bridge quality
