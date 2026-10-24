@@ -34,6 +34,14 @@ jobs:
         run: cargo install --locked mdbook --version 0.5.4
       - name: Documentation contract
         run: bash scripts/check-documentation.sh
+      - name: Workflow action contract
+        # Resolves each pinned action's action.yml and checks that every
+        # `with:` key names a declared input and that no required input is
+        # missing. actionlint does not resolve remote actions, so it cannot
+        # catch either mistake.
+        run: bash scripts/check-workflow-actions.sh
+      - name: Workflow action contract tests
+        run: bash scripts/test-workflow-actions.sh
 
   bridge-quality:
     name: Authorized Editor bridge quality

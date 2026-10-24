@@ -55,6 +55,26 @@ PRs to `main` do not trigger a deployment. PRs run the CI workflow
 `scripts/check-documentation.sh` and therefore builds and tests the
 book as part of the quality gate.
 
+## The workflow action contract
+
+The CI quality job also runs `scripts/check-workflow-actions.sh`. That
+script resolves the `action.yml` of every action the workflows pin and
+checks two things for each step:
+
+- Every key under `with:` names an input the action actually declares.
+- Every required input the action declares is supplied.
+
+`actionlint` covers workflow syntax, but it does not resolve remote
+actions, so it cannot catch either mistake. A wrong `with:` key is
+silently ignored by the action, and a missing required input fails the
+job only after the runner has already started. Both shipped undetected
+because the CI jobs had never actually run.
+
+The check caches each fetched `action.yml` under the system temporary
+directory, and `scripts/test-workflow-actions.sh` exercises the parsing
+rules against synthetic manifests so the contract is covered without
+network access.
+
 ## Required repository settings
 
 The workflow depends on two repository-level settings that you

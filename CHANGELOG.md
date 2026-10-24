@@ -13,6 +13,9 @@ All notable repository changes are documented here. Versioning follows the suppo
 ### Fixed
 
 - `actions/checkout` in the book workflow was referenced by a floating version tag instead of a commit SHA, unlike every other action in the repository.
+- The release workflow passed `tag` to `softprops/action-gh-release`, which the action does not declare. The action ignored the unknown input and fell back to `github.ref_name`, so a manually dispatched release would have been published against the branch instead of the requested tag. The input is now `tag_name`.
+- The CodeQL workflow invoked `dtolnay/rust-toolchain` without its required `toolchain` input, so the job failed at that step with `'toolchain' is a required input` before it ever reached the build. The action does not read `rust-toolchain.toml`.
+- `clipboard-win` 5.4.1 was yanked upstream, which failed `cargo deny --all-features check` and blocked the supply-chain job. It is updated to 5.4.3, which satisfies `arboard`'s `^5.3.1` requirement.
 
 - `vortex-bevy view` never opened a native window on any platform. The `bevy_winit` feature was not enabled on the `bevy` dependency, so Bevy's `DefaultPlugins` did not install `WinitPlugin` and the viewer had no event loop at all: `App::run` fell back to Bevy's single-tick runner and returned immediately. The `bevy_winit` feature is now enabled, and the viewer opens a real window. The macOS 26 / winit 0.31 explanation in [#7](https://github.com/greysquirr3l/vortex-bevy/issues/7) was a misdiagnosis: winit 0.30.13 opens windows normally on macOS 26, and the Bevy 0.20 release that pinned it was never the problem.
 - `vortex-bevy view` reported `vortex.runtime.window_unavailable` for every host because the post-run window probe queried the caller's `App` after `App::run` had moved the world into the event loop, leaving that `App` empty. The probe now counts `Window` entities from inside the schedule and keeps the highest count it saw, so a window that was created and later closed still reports as created.
@@ -24,6 +27,7 @@ All notable repository changes are documented here. Versioning follows the suppo
 
 - Bevy's logger is enabled for the desktop viewer, so renderer, asset, and windowing diagnostics reach the operator instead of failing silently.
 - A typed `published_conversion_asset_root` helper that resolves the directory a published conversion's assets are served from.
+- A workflow action contract check that resolves the `action.yml` of every pinned action and verifies that each `with:` key names a declared input and that no required input is missing. `actionlint` does not resolve remote actions, so it cannot catch either mistake. The check runs in the CI quality job and in the release readiness script, and `scripts/test-workflow-actions.sh` covers its parsing rules against synthetic manifests.
 
 ## 0.1.0 - 2026-10-22
 

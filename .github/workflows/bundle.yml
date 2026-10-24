@@ -192,7 +192,11 @@ jobs:
       - name: Create or update GitHub Release
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
-          tag: ${{ steps.tag.outputs.tag }}
+          # The action names this input `tag_name`. Passing `tag` is an
+          # unknown input: the action ignores it and falls back to
+          # `github.ref_name`, so a manual dispatch would publish the
+          # release against the branch instead of the requested tag.
+          tag_name: ${{ steps.tag.outputs.tag }}
           # Draft so a maintainer can edit the body / verify checksums
           # before publishing. Use workflow_dispatch with a non-draft
           # input or push the release live from the UI.
