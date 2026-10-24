@@ -35,7 +35,7 @@ Engine-specific (required for the engines listed):
 - `--guid <hex32>` — Unity asset GUID. Required only for `--engine unity`.
 - `--variant <expr>` — USD selection expression. Defaults to a root
   selection if omitted. See
-  [`docs/usd_stage_ingestion_contract.md`](../../docs/usd_stage_ingestion_contract.md)
+  [`docs/usd_stage_ingestion_contract.md`](../../../docs/usd_stage_ingestion_contract.md)
   for the grammar.
 - `--payload-policy <forbid|metadata_only>` — USD payload handling.
   Defaults to `forbid`.

@@ -2,7 +2,7 @@
 
 The compatibility matrix is the at-rest JSON form of the support matrix.
 The CLI's `support-matrix --format json` command emits the same
-document; the file at [`docs/compatibility_matrix.json`](../../docs/compatibility_matrix.json)
+document; the file at [`docs/compatibility_matrix.json`](../../../docs/compatibility_matrix.json)
 is a snapshot of that document at every release cut.
 
 This page is a curated, operator-oriented summary. For authoritative
@@ -45,7 +45,7 @@ machine-readable data, always run the CLI or read the JSON file.
 | `runtime.bevy_egui_viewer`                          | `converted`        |
 
 For the full machine-readable list and the remediation strings, see
-[`docs/compatibility_matrix.json`](../../docs/compatibility_matrix.json)
+[`docs/compatibility_matrix.json`](../../../docs/compatibility_matrix.json)
 or run `vortex-bevy support-matrix --format json`.
 
 ## What the matrix does not tell you

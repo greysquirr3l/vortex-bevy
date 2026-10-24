@@ -98,7 +98,7 @@ vortex-bevy convert \
 | `--profile`        | typed `ExportProfileName` | yes                 | ASCII alphanumeric + `-` + `_`                                                           |
 | `--output`         | filesystem path           | yes                 | canonicalizes; artifact store root                                                       |
 | `--guid`           | string                    | Unity only          | 32 lowercase hex chars                                                                   |
-| `--variant`        | typed `StageSelection`    | USD only            | see [`docs/usd_stage_ingestion_contract.md`](../../docs/usd_stage_ingestion_contract.md) |
+| `--variant`        | typed `StageSelection`    | USD only            | see [`docs/usd_stage_ingestion_contract.md`](../../../docs/usd_stage_ingestion_contract.md) |
 | `--payload-policy` | enum                      | USD only            | `forbid` or `metadata_only`                                                              |
 | `--dry-run`        | flag                      | no                  | compute plan without publishing                                                          |
 | `--overwrite`      | flag                      | no                  | permit replacement only inside `--output`                                                |
@@ -148,7 +148,7 @@ vortex-bevy support-matrix [--format <text|json>]
 ```
 
 JSON output is the canonical form. The same document is also emitted
-to [`docs/compatibility_matrix.json`](../../docs/compatibility_matrix.json)
+to [`docs/compatibility_matrix.json`](../../../docs/compatibility_matrix.json)
 at every release cut.
 
 ## `version`

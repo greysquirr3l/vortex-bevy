@@ -14,7 +14,7 @@ cargo run -p vortex-bevy -- support-matrix --format json
 JSON is the recommended format for tooling. The text format is for
 human reading at a terminal.
 
-The output is also emitted to [`docs/compatibility_matrix.json`](../../docs/compatibility_matrix.json)
+The output is also emitted to [`docs/compatibility_matrix.json`](../../../docs/compatibility_matrix.json)
 at every release cut, so any tooling that does not want to shell out to
 the CLI can read the JSON file directly.
 

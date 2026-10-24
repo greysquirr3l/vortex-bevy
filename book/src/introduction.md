@@ -64,7 +64,7 @@ there is no encryption, no RNG, and no network code path. Path traversal
 is prevented by systematic `canonicalize + starts_with(root)` confinement
 in every adapter that reads from disk.
 
-The full audit is at [`docs/security_audit_t30.md`](../docs/security_audit_t30.md).
+The full audit is at [`docs/security_audit_t30.md`](../../docs/security_audit_t30.md).
 
 ## How to read this book
 

@@ -210,7 +210,7 @@ unit-tested in the orchestrator's `tests` module. To see the path
 without authoring a multi-billion-prim file, look at the unit test
 `prim_count_exceeds_glb_returns_typed_remediation` (when it lands) or
 the typed-error contract documented at
-[`docs/canonical_scene_ir_contract.md`](../../docs/canonical_scene_ir_contract.md).
+[`docs/canonical_scene_ir_contract.md`](../../../docs/canonical_scene_ir_contract.md).
 
 ## Where to go next
 

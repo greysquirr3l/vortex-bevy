@@ -7,6 +7,9 @@ cd "$ROOT"
 check_local_links() {
   local document link target directory
   while IFS= read -r -d '' document; do
+    # Only tracked documents are scanned. A gitignored file is absent from a
+    # clean checkout, so its links cannot be validated here or in CI.
+    git ls-files --error-unmatch -- "$document" >/dev/null 2>&1 || continue
     directory="$(dirname "$document")"
     while IFS= read -r link; do
       target="${link%%#*}"
@@ -17,8 +20,16 @@ check_local_links() {
         printf 'Broken local Markdown link in %s: %s\n' "$document" "$link" >&2
         return 1
       fi
+      # The target must be tracked by git. A gitignored file can be present on
+      # a developer machine and absent from a clean checkout, so a link to one
+      # passes here and breaks in CI.
+      if ! git ls-files --error-unmatch -- "$directory/$target" >/dev/null 2>&1; then
+        printf 'Local Markdown link in %s targets an untracked file: %s\n' \
+          "$document" "$link" >&2
+        return 1
+      fi
     done < <(grep -oE '\]\([^)]*\)' "$document" | sed -E 's/^\]\(//; s/\)$//' || true)
-  done < <(find README.md docs fixtures bridges -type f -name '*.md' -print0)
+  done < <(find README.md docs fixtures bridges book/src -type f -name '*.md' -print0)
 }
 
 run_documented_cli_examples() {
