@@ -8,6 +8,17 @@ on:
 permissions:
   contents: read
 
+env:
+  # The ubuntu runner has roughly 14 GB of free disk. A default debug build
+  # of this workspace is 12 GB, and `cargo test` and `cargo l` add their own
+  # artifacts on top, so the runner runs out of disk partway through the
+  # link step and fails with "ld terminated with signal 7 [Bus error]".
+  # Stripping debuginfo and disabling incremental compilation brings the
+  # build to 7.5 GB, which fits, and it is also faster to link.
+  CARGO_PROFILE_DEV_DEBUG: "0"
+  CARGO_PROFILE_TEST_DEBUG: "0"
+  CARGO_INCREMENTAL: "0"
+
 jobs:
   quality:
     name: Quality (${{ matrix.os }})
@@ -24,6 +35,11 @@ jobs:
           components: clippy, rustfmt
       - name: Build
         run: cargo build --workspace --all-targets --all-features
+      - name: Build disk budget
+        # The runner runs out of disk during the link step and fails with a
+        # bus error that points at the linker rather than at the disk. This
+        # fails with a message that names the cause.
+        run: bash scripts/check-build-disk.sh
       - name: Test
         run: cargo test --workspace --all-features
       - name: Format

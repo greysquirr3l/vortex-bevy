@@ -121,6 +121,28 @@ The rule is set to *strict*, so the checks must pass against the
 current head of `main`. Rebase before expecting the checks to go
 green.
 
+### Disk budget
+
+The GitHub-hosted runners have roughly 14 GB of free disk. A default
+debug build of this workspace is 12 GB, and `cargo test` and `cargo l`
+each add their own artifacts, so the runner runs out of space partway
+through the link step.
+
+The symptom is misleading. The runner reports `ld terminated with
+signal 7 [Bus error]`, which points at the linker rather than at the
+disk, and the build steps that follow are simply reported as skipped.
+
+The CI workflow sets `CARGO_PROFILE_DEV_DEBUG=0`,
+`CARGO_PROFILE_TEST_DEBUG=0`, and `CARGO_INCREMENTAL=0`, which brings
+the build to 7.5 GB and makes it faster to link. The release bundle
+workflow leaves the release profile alone, so the shipped binary keeps
+its debug symbols; a release build is 3.2 GB and fits.
+
+`scripts/check-build-disk.sh` measures the build directory against a
+10 GB budget and runs after the build in both workflows. It fails with
+a message that names the cause instead of leaving a bus error to be
+interpreted.
+
 ## Adding a chapter
 
 To add a new chapter:

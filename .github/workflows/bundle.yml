@@ -115,6 +115,13 @@ jobs:
         shell: bash
         run: cargo build --release --bin vortex-bevy -p vortex-bevy
 
+      - name: Build disk budget
+        # The runner runs out of disk during the link step and fails with a
+        # bus error that points at the linker rather than at the disk. This
+        # fails with a message that names the cause.
+        shell: bash
+        run: bash scripts/check-build-disk.sh
+
       - name: Build platform bundle
         # Linux + macOS use cargo-bundle. Windows skips it (the Windows
         # matrix leg uploads the raw release `.exe` instead).
