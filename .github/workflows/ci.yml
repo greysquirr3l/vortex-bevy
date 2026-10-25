@@ -8,6 +8,17 @@ on:
 permissions:
   contents: read
 
+env:
+  # The ubuntu runner has roughly 14 GB of free disk. A default debug build
+  # of this workspace is 12 GB, and `cargo test` and `cargo l` add their own
+  # artifacts on top, so the runner runs out of disk partway through the
+  # link step and fails with "ld terminated with signal 7 [Bus error]".
+  # Stripping debuginfo and disabling incremental compilation brings the
+  # build to 7.5 GB, which fits, and it is also faster to link.
+  CARGO_PROFILE_DEV_DEBUG: "0"
+  CARGO_PROFILE_TEST_DEBUG: "0"
+  CARGO_INCREMENTAL: "0"
+
 jobs:
   quality:
     name: Quality (${{ matrix.os }})
@@ -17,13 +28,18 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-14, windows-latest]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772 # master
         with:
           toolchain: 1.97.1
           components: clippy, rustfmt
       - name: Build
         run: cargo build --workspace --all-targets --all-features
+      - name: Build disk budget
+        # The runner runs out of disk during the link step and fails with a
+        # bus error that points at the linker rather than at the disk. This
+        # fails with a message that names the cause.
+        run: bash scripts/check-build-disk.sh
       - name: Test
         run: cargo test --workspace --all-features
       - name: Format
@@ -34,6 +50,14 @@ jobs:
         run: cargo install --locked mdbook --version 0.5.4
       - name: Documentation contract
         run: bash scripts/check-documentation.sh
+      - name: Workflow action contract
+        # Resolves each pinned action's action.yml and checks that every
+        # `with:` key names a declared input and that no required input is
+        # missing. actionlint does not resolve remote actions, so it cannot
+        # catch either mistake.
+        run: bash scripts/check-workflow-actions.sh
+      - name: Workflow action contract tests
+        run: bash scripts/test-workflow-actions.sh
       - name: Branch protection contract
         # The required status checks must name the CI job display names.
         # A check that names a job id never reports a result, which leaves
@@ -46,11 +70,11 @@ jobs:
     name: Authorized Editor bridge quality
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.12"
-      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           dotnet-version: "8.0.x"
       - name: Install pinned bridge lint tools
@@ -74,7 +98,7 @@ jobs:
     name: Supply chain and fixture policy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772 # master
         with:
           toolchain: 1.97.1
@@ -93,9 +117,9 @@ jobs:
     name: Secret scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2
+      - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
