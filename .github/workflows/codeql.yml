@@ -21,12 +21,9 @@ jobs:
       - uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
         with:
           languages: rust
-          build-mode: manual
-      - uses: dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772 # master
-        with:
-          # The action requires an explicit toolchain and does not read
-          # rust-toolchain.toml. Without it the step exits with
-          # "'toolchain' is a required input".
-          toolchain: 1.97.1
-      - run: cargo build --workspace --all-targets --all-features
+          # Rust does not support the manual build mode; the extractor only
+          # accepts `none`, which lets CodeQL run the standard build itself.
+          # The separate toolchain and build steps that manual mode needed
+          # are therefore gone.
+          build-mode: none
       - uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
