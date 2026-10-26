@@ -33,6 +33,15 @@ jobs:
         with:
           toolchain: 1.97.1
           components: clippy, rustfmt
+      - name: Install software Vulkan driver
+        # The runner has the Vulkan loader but no ICD, so wgpu finds no
+        # adapter and Bevy panics with "Unable to find a GPU". Installing
+        # mesa-vulkan-drivers provides lavapipe, the software Vulkan
+        # renderer, which gives the headless runner an adapter.
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y mesa-vulkan-drivers
       - name: Build
         run: cargo build --workspace --all-targets --all-features
       - name: Build disk budget

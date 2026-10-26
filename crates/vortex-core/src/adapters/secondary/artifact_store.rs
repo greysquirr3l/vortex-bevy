@@ -558,14 +558,26 @@ fn remove_directory_if_exists(path: &Path) -> Result<(), ArtifactStoreError> {
 }
 
 fn sync_directory(path: &Path) -> Result<(), ArtifactStoreError> {
-    let directory = File::open(path).map_err(|source| ArtifactStoreError::Io {
-        operation: "open directory for sync",
-        path: path.to_path_buf(),
-        source,
-    })?;
-    directory.sync_all().map_err(|source| ArtifactStoreError::Io {
-        operation: "sync directory",
-        path: path.to_path_buf(),
-        source,
-    })
+    // Windows cannot open a directory as a file, so the fsync that makes a
+    // rename durable is not available there. The rename is still atomic and
+    // the payload files are synced individually, so durability still holds
+    // at file granularity.
+    #[cfg(windows)]
+    {
+        let _ = path;
+        Ok(())
+    }
+    #[cfg(not(windows))]
+    {
+        let directory = File::open(path).map_err(|source| ArtifactStoreError::Io {
+            operation: "open directory for sync",
+            path: path.to_path_buf(),
+            source,
+        })?;
+        directory.sync_all().map_err(|source| ArtifactStoreError::Io {
+            operation: "sync directory",
+            path: path.to_path_buf(),
+            source,
+        })
+    }
 }
