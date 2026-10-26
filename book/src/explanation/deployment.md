@@ -143,6 +143,17 @@ its debug symbols; a release build is 3.2 GB and fits.
 a message that names the cause instead of leaving a bus error to be
 interpreted.
 
+### Headless GPU
+
+The runtime tests build a Bevy app and tick it, which needs a graphics
+adapter. The GitHub-hosted ubuntu runner ships the Vulkan loader but no
+Vulkan ICD, so wgpu finds no adapter and Bevy panics with `Unable to
+find a GPU`. The CI workflow installs `mesa-vulkan-drivers`, which
+provides lavapipe, the software Vulkan renderer.
+
+The macOS runner has a real GPU and needs nothing extra. The Windows
+runner ships a software adapter that wgpu finds without help.
+
 ## Adding a chapter
 
 To add a new chapter:
