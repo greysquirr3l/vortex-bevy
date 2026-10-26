@@ -557,27 +557,45 @@ fn remove_directory_if_exists(path: &Path) -> Result<(), ArtifactStoreError> {
     }
 }
 
+/// Syncs a directory so that a rename into it survives a power loss.
+///
+/// Windows cannot open a directory as a file, so the fsync that makes a
+/// rename durable is not available there. The rename is still atomic and
+/// the payload files are synced individually, so durability holds at file
+/// granularity.
+#[cfg(not(windows))]
 fn sync_directory(path: &Path) -> Result<(), ArtifactStoreError> {
-    // Windows cannot open a directory as a file, so the fsync that makes a
-    // rename durable is not available there. The rename is still atomic and
-    // the payload files are synced individually, so durability still holds
-    // at file granularity.
-    #[cfg(windows)]
-    {
-        let _ = path;
-        Ok(())
-    }
-    #[cfg(not(windows))]
-    {
-        let directory = File::open(path).map_err(|source| ArtifactStoreError::Io {
-            operation: "open directory for sync",
+    let directory = File::open(path).map_err(|source| ArtifactStoreError::Io {
+        operation: "open directory for sync",
+        path: path.to_path_buf(),
+        source,
+    })?;
+    directory.sync_all().map_err(|source| ArtifactStoreError::Io {
+        operation: "sync directory",
+        path: path.to_path_buf(),
+        source,
+    })
+}
+
+/// Confirms that a directory is reachable, in place of the fsync.
+///
+/// Opening a directory as a file fails on Windows, so the directory cannot
+/// be flushed there. The check keeps the guarantee the Unix path gets for
+/// free from opening the directory: the path is a real directory at the
+/// moment the caller claims to have synced it.
+#[cfg(windows)]
+fn sync_directory(path: &Path) -> Result<(), ArtifactStoreError> {
+    let metadata = fs::metadata(path).map_err(|source| ArtifactStoreError::Io {
+        operation: "inspect directory for sync",
+        path: path.to_path_buf(),
+        source,
+    })?;
+    if !metadata.is_dir() {
+        return Err(ArtifactStoreError::Io {
+            operation: "inspect directory for sync",
             path: path.to_path_buf(),
-            source,
-        })?;
-        directory.sync_all().map_err(|source| ArtifactStoreError::Io {
-            operation: "sync directory",
-            path: path.to_path_buf(),
-            source,
-        })
+            source: io::Error::other("path is not a directory"),
+        });
     }
+    Ok(())
 }
