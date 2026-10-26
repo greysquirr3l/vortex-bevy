@@ -7,10 +7,8 @@ mutable state. This page documents what the project measures for
 performance and observability, and what it deliberately does not
 measure.
 
-For the full contract, see
-[`docs/performance_baseline.md`](../../docs/performance_baseline.md).
 For the observability contracts, see
-[`docs/release_hardening.md`](../../docs/release_hardening.md).
+[`docs/security_audit_t30.md`](../../../docs/security_audit_t30.md).
 
 ## Performance baseline
 
@@ -66,8 +64,7 @@ returning. Failed admission returns `CapacityExhausted` or
 
 The `StreamingUsdStageQueue` adds a bounded worker queue for selected
 USDA parsing. The queue length, worker count, and per-job memory
-budget are all bounded and documented at
-[`docs/release_hardening.md`](../../docs/release_hardening.md).
+budget are all bounded and documented in this chapter.
 
 The queue deliberately does not:
 
@@ -148,7 +145,7 @@ If a benchmark result diverges from the documented baseline:
    regression. Owned self-authored fixtures are not a representative
    workload; the production-scale fixtures under
    `fixtures/production_scale/` are documented in
-   [`fixtures/production_scale/NOTICE.md`](../../fixtures/production_scale/NOTICE.md).
+   [`fixtures/production_scale/NOTICE.md`](../../../fixtures/production_scale/NOTICE.md).
 
 ## Where to go next
 

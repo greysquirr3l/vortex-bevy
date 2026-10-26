@@ -130,7 +130,7 @@ cargo-bundle v0.11 picks the right format per platform from a single
 `icon` array in `[package.metadata.bundle]`. The metadata block already
 declares these paths; just drop the files in. Regeneration commands
 from a single SVG source live in
-[`crates/vortex-bevy/assets/bundle/README.md`](../../crates/vortex-bevy/assets/bundle/README.md).
+[`crates/vortex-bevy/assets/bundle/README.md`](../../../crates/vortex-bevy/assets/bundle/README.md).
 
 ## Why not a cross-platform CI bundle job?
 
@@ -160,5 +160,5 @@ each channel needs beyond that:
 ## Going further
 
 - [Tutorial: Convert a USD stage end-to-end](../tutorial/usd-end-to-end.md) — produces a published conversion that the bundled viewer can load.
-- [Reference: CLI](./reference/cli.md) — the full CLI flag matrix the bundle exposes.
+- [Reference: CLI](../reference/cli.md) — the full CLI flag matrix the bundle exposes.
 - [Explanation: Deployment](../explanation/deployment.md) — how the bundle workflow ties into GitHub Releases.

@@ -113,4 +113,4 @@ adapter.
   `bridges/unreal/vortex_unreal_bridge.py` and pass the result through
   [Convert an authorized source](convert.md).
 - The bridge protocol is documented at
-  [`docs/unreal_editor_bridge_protocol.md`](../../docs/unreal_editor_bridge_protocol.md).
+  [`docs/unreal_editor_bridge_protocol.md`](../../../docs/unreal_editor_bridge_protocol.md).

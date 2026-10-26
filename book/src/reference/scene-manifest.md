@@ -6,9 +6,9 @@ page documents the manifest schema, the determinism contract, and the
 typed provenance model.
 
 For the full field-by-field contract, see
-[`docs/scene_manifest_contract.md`](../../docs/scene_manifest_contract.md).
+[`docs/scene_manifest_contract.md`](../../../docs/scene_manifest_contract.md).
 For the runtime's loader, see
-[`docs/bevy_runtime_loading_contract.md`](../../docs/bevy_runtime_loading_contract.md).
+[`docs/bevy_runtime_loading_contract.md`](../../../docs/bevy_runtime_loading_contract.md).
 
 ## Versioning
 

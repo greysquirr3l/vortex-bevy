@@ -129,11 +129,10 @@ fn fixed_checked_in_script_command_is_deterministic_and_confined() -> Result<(),
 
     assert!(command.program().ends_with("UnrealEditor-Cmd"));
     assert!(arguments.iter().any(|argument| argument == "-unattended"));
-    assert!(
-        arguments
-            .iter()
-            .any(|argument| argument.contains("bridges/unreal/vortex_unreal_bridge.py"))
-    );
+    // The script path is assembled with the platform separator, so the
+    // assertion normalizes it rather than assuming a forward slash.
+    let script_suffix = ["bridges", "unreal", "vortex_unreal_bridge.py"].join("/");
+    assert!(arguments.iter().any(|argument| argument.replace('\\', "/").contains(&script_suffix)));
     assert!(arguments.iter().any(|argument| argument == "--assets"));
     assert!(arguments.iter().any(|argument| argument
         == "/Game/Blueprints/BP_Controller.BP_Controller,/Game/Meshes/SM_Crate.SM_Crate"));

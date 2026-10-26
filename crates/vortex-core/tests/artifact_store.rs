@@ -216,3 +216,34 @@ fn list_published_conversions_enumerates_only_directories_with_a_manifest()
     fs::remove_dir_all(root)?;
     Ok(())
 }
+
+/// Publishing must succeed on every platform, including the ones that
+/// cannot open a directory as a file.
+///
+/// The published directory is synced so that a rename cannot expose a
+/// half-written conversion. Windows has no way to open a directory as a
+/// file, so the sync is skipped there and durability rests on the payload
+/// files, which are synced individually. This test pins the behaviour
+/// that the skip is invisible to callers: publishing, verifying, and
+/// cleaning all still succeed.
+#[test]
+fn publishing_succeeds_on_platforms_without_directory_sync() -> Result<(), Box<dyn Error>> {
+    let root = root("directory-sync")?;
+    let store = store(&root)?;
+    let request = request()?;
+    let id = request.conversion.id().clone();
+
+    assert_eq!(store.publish(&request)?, PublicationOutcome::Published);
+    assert_eq!(store.publish(&request)?, PublicationOutcome::Reused);
+
+    let verification = store.verify(&id)?;
+    let expected_hash = request.payloads.first().ok_or("missing payload")?.hash();
+    assert!(verification.verified_hashes.contains(&expected_hash));
+    assert_eq!(store.read(&id)?, Some(request.conversion));
+
+    store.clean_conversion(&id)?;
+    assert_eq!(store.read(&id)?, None);
+
+    fs::remove_dir_all(root)?;
+    Ok(())
+}

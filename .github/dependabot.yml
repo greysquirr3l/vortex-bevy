@@ -4,9 +4,17 @@ updates:
     directory: /
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+    # Ten covers every outdated Rust dependency at once. At the previous
+    # limit of five the queue saturated and the remaining upgrades were
+    # never opened.
+    open-pull-requests-limit: 10
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+    # Ten covers every Node 24 action major at once. At the previous
+    # limit of five the queue saturated on checkout, configure-pages,
+    # gitleaks, and codeql, and setup-python, setup-dotnet,
+    # upload-artifact, download-artifact, deploy-pages,
+    # upload-pages-artifact, and action-gh-release were never opened.
+    open-pull-requests-limit: 10

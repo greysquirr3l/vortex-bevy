@@ -269,8 +269,13 @@ fn published_conversion_resolves_its_conversion_directory_as_asset_root()
     // that owns it, so the asset server root has to be that directory. The
     // artifact root contains the conversion directory and cannot resolve the
     // relative path.
+    //
+    // The store canonicalizes its root, and on Windows canonicalization
+    // returns the verbatim `\\?\` form, so the two paths are compared after
+    // resolving them rather than as raw strings.
     let asset_root = published_conversion_asset_root(&store, &id)?;
-    assert_eq!(asset_root, root.join(id.as_str()));
+    let expected = root.join(id.as_str());
+    assert_eq!(asset_root.canonicalize()?, expected.canonicalize()?);
     assert!(asset_root.join("scene.glb").is_file());
     assert!(!root.join("scene.glb").is_file());
 

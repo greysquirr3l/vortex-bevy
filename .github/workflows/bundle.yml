@@ -91,7 +91,7 @@ jobs:
             artifact_name: "vortex-bevy-windows-x86_64"
     steps:
       - name: Checkout
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772 # master
@@ -115,6 +115,13 @@ jobs:
         shell: bash
         run: cargo build --release --bin vortex-bevy -p vortex-bevy
 
+      - name: Build disk budget
+        # The runner runs out of disk during the link step and fails with a
+        # bus error that points at the linker rather than at the disk. This
+        # fails with a message that names the cause.
+        shell: bash
+        run: bash scripts/check-build-disk.sh
+
       - name: Build platform bundle
         # Linux + macOS use cargo-bundle. Windows skips it (the Windows
         # matrix leg uploads the raw release `.exe` instead).
@@ -137,7 +144,7 @@ jobs:
           ls -la target/release/bundle/
 
       - name: Upload artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ${{ matrix.artifact_name }}
           path: ${{ matrix.artifact_paths }}
@@ -165,7 +172,7 @@ jobs:
           fi
 
       - name: Download all bundle artifacts
-        uses: actions/download-artifact@484a0b528fb4d7bd804637ccb632e47a0e638317 # v4
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           path: artifacts
 
@@ -190,9 +197,13 @@ jobs:
           fi
 
       - name: Create or update GitHub Release
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v2
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
-          tag: ${{ steps.tag.outputs.tag }}
+          # The action names this input `tag_name`. Passing `tag` is an
+          # unknown input: the action ignores it and falls back to
+          # `github.ref_name`, so a manual dispatch would publish the
+          # release against the branch instead of the requested tag.
+          tag_name: ${{ steps.tag.outputs.tag }}
           # Draft so a maintainer can edit the body / verify checksums
           # before publishing. Use workflow_dispatch with a non-draft
           # input or push the release live from the UI.
