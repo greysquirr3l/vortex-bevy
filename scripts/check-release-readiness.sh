@@ -10,7 +10,7 @@ git diff --check
 cargo fmt --all -- --check
 cargo l
 cargo build --workspace --all-targets --all-features
-cargo test --workspace --all-targets --all-features
+cargo test --workspace --all-targets --all-features --no-fail-fast
 bash scripts/check-bridge-quality.sh
 bash scripts/check-documentation.sh
 bash scripts/check-fixture-policy.sh

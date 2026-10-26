@@ -50,7 +50,11 @@ jobs:
         # fails with a message that names the cause.
         run: bash scripts/check-build-disk.sh
       - name: Test
-        run: cargo test --workspace --all-features
+        # `--no-fail-fast` runs every test binary even when one of them
+        # fails. Without it cargo stops at the first failing binary, so a
+        # run reports one failure and hides the rest behind it, and each
+        # fix reveals the next one in a separate CI cycle.
+        run: cargo test --workspace --all-features --no-fail-fast
       - name: Format
         run: cargo fmt --all -- --check
       - name: Strict Clippy
