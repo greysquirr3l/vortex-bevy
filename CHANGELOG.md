@@ -63,6 +63,7 @@ The desktop viewer now opens a real native window on every platform, and the rel
 - The Windows bundle leg failed after a successful build. The "List produced artifacts" step assumed a `target/release/bundle/` directory that the Windows leg never creates, so the listing aborted the job before the upload.
 - The macOS release asset arrived as a bare `Contents/` tree with no `.app` wrapper and could not be launched. The leg now ships the `.dmg`, which carries the bundle intact.
 - The release asset globs referenced an `.rpm` that cargo-bundle never builds. Its RPM emitter is still `unimplemented!()` upstream, so the crate's Linux package types are `.deb` and `.AppImage` only; requesting `--format rpm` panics. The globs and the documentation now match the formats that are actually produced.
+- A manually dispatched bundle run built its artifacts from the default branch instead of the requested tag, so the artifacts and the release pointed at different commits. The checkout now resolves the tag, and a release step fails early when the tag does not exist instead of creating an `untagged-<sha>` placeholder that no `gh release view` can find.
 
 ## 0.1.0 - 2026-10-22
 
