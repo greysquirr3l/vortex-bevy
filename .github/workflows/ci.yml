@@ -33,6 +33,20 @@ jobs:
         with:
           toolchain: 1.97.1
           components: clippy, rustfmt
+      - name: Probe graphics environment
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          echo "=== vulkan ICDs ==="
+          find /usr/share/vulkan/icd.d/ 2>&1 || true
+          echo "=== mesa packages ==="
+          dpkg -l 2>/dev/null | grep -iE "mesa|vulkan" | head -20 || true
+          echo "=== apt candidates ==="
+          apt-cache policy mesa-vulkan-drivers 2>&1 | head -5 || true
+          apt-cache policy libgl1-mesa-dri 2>&1 | head -5 || true
+          echo "=== vulkaninfo ==="
+          (command -v vulkaninfo && vulkaninfo --summary 2>&1 | head -30) || echo "no vulkaninfo"
+          echo "=== dri drivers ==="
+          find /usr/lib/x86_64-linux-gnu/dri/ -maxdepth 1 2>&1 | head -10 || true
       - name: Build
         run: cargo build --workspace --all-targets --all-features
       - name: Build disk budget
