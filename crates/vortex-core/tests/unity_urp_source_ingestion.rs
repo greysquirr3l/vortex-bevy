@@ -11,6 +11,27 @@ use vortex_core::{
     domain::SourceAssetPath,
 };
 
+/// Creates a symbolic link at `link` that points at `target`.
+///
+/// Windows only grants symlink creation to an administrator or to a
+/// developer-mode install, so this can fail there. The caller decides what
+/// to assert when it does.
+fn create_file_symlink(target: &Path, link: &Path) -> Result<(), std::io::Error> {
+    #[cfg(unix)]
+    {
+        std::os::unix::fs::symlink(target, link)
+    }
+    #[cfg(windows)]
+    {
+        std::os::windows::fs::symlink_file(target, link)
+    }
+    #[cfg(not(any(unix, windows)))]
+    {
+        let _ = (target, link);
+        Err(std::io::Error::from(std::io::ErrorKind::Unsupported))
+    }
+}
+
 fn temporary_project(label: &str) -> Result<PathBuf, Box<dyn Error>> {
     let root = std::env::temp_dir().join(format!("vortex-unity-{label}-{}", std::process::id()));
     if root.exists() {
@@ -143,22 +164,27 @@ fn missing_meta_duplicate_guid_and_symlink_escape_fail_before_publication()
     let external = std::env::temp_dir().join(format!("vortex-external-{}", std::process::id()));
     fs::write(&external, "%YAML 1.1\n--- !u!1 &3\nGameObject:\n")?;
     let link = escape_root.join("Assets/Escape.prefab");
-    #[cfg(unix)]
-    std::os::unix::fs::symlink(&external, &link)?;
-    #[cfg(not(unix))]
-    fs::copy(&external, &link)?;
+    let symlinked = create_file_symlink(&external, &link);
+    if symlinked.is_err() {
+        // Windows only grants symlink creation to an administrator or to a
+        // developer-mode install. Without that privilege the escape cannot be
+        // constructed, so a copy stands in for it and has to stay confined
+        // to the project rather than escape it.
+        fs::copy(&external, &link)?;
+    }
     write_meta(&link, "11223344556677889900aabbccddeeff")?;
     let request = UnityProjectRequest::new(&escape_root, selected(&["Assets/Escape.prefab"])?)?;
-    #[cfg(unix)]
-    assert!(matches!(
-        UnityProjectInspector.inspect(&request),
-        Err(UnityProjectError::PathEscape { .. })
-    ));
-    #[cfg(not(unix))]
-    assert!(matches!(
-        UnityProjectInspector.inspect(&request),
-        Err(UnityProjectError::MissingMeta { .. })
-    ));
+    if symlinked.is_ok() {
+        assert!(matches!(
+            UnityProjectInspector.inspect(&request),
+            Err(UnityProjectError::PathEscape { .. })
+        ));
+    } else {
+        assert!(!matches!(
+            UnityProjectInspector.inspect(&request),
+            Err(UnityProjectError::PathEscape { .. })
+        ));
+    }
     fs::remove_file(external)?;
     fs::remove_dir_all(escape_root)?;
     Ok(())
