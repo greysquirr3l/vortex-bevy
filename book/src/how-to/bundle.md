@@ -26,8 +26,11 @@ PATH (only the format you want):
 | Format      | Tool           | Notes                                           |
 | ----------- | -------------- | ----------------------------------------------- |
 | `.deb`      | `dpkg-deb`     | Installed by default on Debian/Ubuntu           |
-| `.rpm`      | `rpmbuild`     | Installed via `dnf install rpm-build` on Fedora |
 | `.AppImage` | `appimagetool` | Download from AppImageKit; optional             |
+
+There is no `.rpm` output. cargo-bundle's RPM emitter is still
+unimplemented upstream, so the crate's Linux package types are `.deb` and
+`.AppImage` only, and asking for `--format rpm` panics.
 
 macOS and Windows need nothing extra — `cargo-bundle` produces
 self-contained bundles on both.
@@ -53,11 +56,15 @@ and prints the produced bundle's location.
 
 | Platform         | Bundle path                                                                                                   |
 | ---------------- | ------------------------------------------------------------------------------------------------------------- |
-| macOS            | `target/release/bundle/osx/Vortex-Bevy.app`                                                                   |
+| macOS            | `target/release/bundle/osx/Vortex-Bevy.app` and `target/release/bundle/dmg/Vortex-Bevy.dmg`                   |
 | Windows          | `target/release/vortex-bevy.exe` (raw release binary; cargo-bundle skipped on Windows, see burtonageo/cargo-bundle#77 / #221 / `WIN32_ERROR(1812)`) |
 | Linux (Debian)   | `target/release/bundle/deb/vortex-bevy_0.2.0_<arch>.deb`                                                      |
-| Linux (Fedora)   | `target/release/bundle/rpm/vortex-bevy-0.2.0.<arch>.rpm`                                                      |
-| Linux (AppImage) | `target/release/bundle/AppImage/Vortex-Bevy_0.2.0_<arch>.AppImage`                                            |
+| Linux (AppImage) | `target/release/bundle/appimage/vortex-bevy_0.2.0_<arch>.AppImage`                                            |
+
+cargo-bundle does not build an `.rpm`: its RPM emitter is still
+unimplemented upstream, so the crate's Linux package types are `.deb` and
+`.AppImage` only. Requesting `--format rpm` panics rather than
+producing an artifact.
 
 The exact format depends on which Linux build tools are on `PATH` at
 build time.
@@ -93,18 +100,14 @@ Download the `.exe` from the GitHub Release, add it to `PATH`, or pin it in the 
 sudo dpkg -i target/release/bundle/deb/vortex-bevy_*.deb
 vortex-bevy view --artifact-root /path/to/output
 
-# .rpm
-sudo rpm -i target/release/bundle/rpm/vortex-bevy-*.rpm
-vortex-bevy view --artifact-root /path/to/output
-
 # AppImage
-chmod +x target/release/bundle/AppImage/Vortex-Bevy-*.AppImage
-./target/release/bundle/AppImage/Vortex-Bevy-*.AppImage view \
+chmod +x target/release/bundle/appimage/vortex-bevy-*.AppImage
+./target/release/bundle/appimage/vortex-bevy-*.AppImage view \
     --artifact-root /path/to/output
 ```
 
-The `.desktop` file (installed by the `.deb` / `.rpm`) lets you launch
-from the application menu.
+The `.desktop` file (installed by the `.deb`) lets you launch from the
+application menu.
 
 ## What the bundle contains
 
@@ -114,8 +117,14 @@ The bundle metadata in `crates/vortex-bevy/Cargo.toml` declares:
 - `identifier = "dev.greysquirr3l.vortex-bevy"` — bundle id (used for macOS code signing, Linux .desktop file naming)
 - `category = "DeveloperTool"` — macOS app-store-style categorization
 - `short_description` / `long_description` — used in `.desktop` files and macOS Get Info pane
-- `homepage` — links the bundled app to the project
-- `license = "MIT OR Apache-2.0"` — bundled Info.plist / installer metadata
+- `icon` — the platform icon array
+- `[osx]` — macOS-specific settings (`frameworks`, `minimum_system_version`)
+
+cargo-bundle v0.12 parses this table with `deny_unknown_fields`, so a
+key it does not declare is a hard error rather than a warning. The
+project's homepage and license are not bundle keys; cargo-bundle reads
+those from the package's own Cargo metadata, which already declares
+both.
 
 Add an icon by dropping the three formats into
 `crates/vortex-bevy/assets/bundle/`:
@@ -126,7 +135,7 @@ Add an icon by dropping the three formats into
 | `vortex-bevy.ico`     | ICO    | Windows  |
 | `vortex-bevy-512.png` | PNG    | Linux    |
 
-cargo-bundle v0.11 picks the right format per platform from a single
+cargo-bundle v0.12 picks the right format per platform from a single
 `icon` array in `[package.metadata.bundle]`. The metadata block already
 declares these paths; just drop the files in. Regeneration commands
 from a single SVG source live in
@@ -150,7 +159,7 @@ each channel needs beyond that:
 
 | Channel                        | Status                  | Notes                                                                                                                                                                                                                                                                                                                |
 | ------------------------------ | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GitHub Releases                | ✅ workflow lands here  | `.deb`, `.rpm`, `.exe`, `.app` zip attached to the tag's release. AppImage and MSI are local-developer-only formats (MSI is intentionally avoided due to cargo-bundle#77 / #221) |
+| GitHub Releases                | ✅ workflow lands here  | `.deb`, `.AppImage`, `.dmg`, and `.exe` attached to the tag's release. MSI is a local-developer-only format (deliberately avoided due to cargo-bundle#77 / #221) |
 | Homebrew tap                   | Out of scope            | A tap and formula are out of scope until macOS code signing lands                                                                                                                                                                                                                                                    |
 | Windows `.exe` (direct download)| ✅                     | Add to PATH or pin to Start Menu. MSI deliberately not shipped — see burtonageo/cargo-bundle#77 and #221                                                                                                                                                                                                                                                         |
 | `winget` / `scoop` manifests   | Out of scope            | Submission requires a published release + an authorized manifest review process                                                                                                                                                                                                                                      |

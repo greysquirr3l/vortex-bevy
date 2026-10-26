@@ -57,6 +57,13 @@ The desktop viewer now opens a real native window on every platform, and the rel
 - The desktop viewer's native window now opens on every supported platform, including macOS 26 (Tahoe). The 0.1.0 release attributed the missing window to winit 0.30.13 on macOS 26; that was a misdiagnosis. The real cause was that the `bevy_winit` feature was never enabled on the `bevy` dependency, so `DefaultPlugins` never installed `WinitPlugin` and the viewer had no event loop at all on any platform.
 - Generated manifests record the converter version as `0.2.0` instead of `0.1.0`. The manifest schema version is unchanged at 1, the runtime checks only that the field is non-empty, and the `minimum_bevy_version` compatibility gate is unaffected, so artifacts produced by 0.1.0 remain loadable by this release.
 
+### Fixed
+
+- The release bundle workflow had never succeeded. Every tag push — `v0.1.0` and `v0.1.0-rc.1` through `rc.5` — failed at the bundle step on all three platforms, so the repository has shipped no artifacts until now. cargo-bundle 0.12 rejects unknown bundle metadata keys, so `homepage`, `publisher`, and `license` became hard errors and the macOS-specific keys moved under a typed `[osx]` sub-table. The manifest is updated to match and the tool is pinned to 0.12.0.
+- The Windows bundle leg failed after a successful build. The "List produced artifacts" step assumed a `target/release/bundle/` directory that the Windows leg never creates, so the listing aborted the job before the upload.
+- The macOS release asset arrived as a bare `Contents/` tree with no `.app` wrapper and could not be launched. The leg now ships the `.dmg`, which carries the bundle intact.
+- The release asset globs referenced an `.rpm` that cargo-bundle never builds. Its RPM emitter is still `unimplemented!()` upstream, so the crate's Linux package types are `.deb` and `.AppImage` only; requesting `--format rpm` panics. The globs and the documentation now match the formats that are actually produced.
+
 ## 0.1.0 - 2026-10-22
 
 The first full release. The runtime and CLI target Bevy 0.20, generated manifests declare `minimum_bevy_version: "0.20"`, and the runtime refuses a manifest that declares any other version.
