@@ -34,6 +34,27 @@ fn identity_parsing_rejects_unsafe_paths() {
     assert!(ron::de::from_str::<SourceAssetPath>("\"../escape\"").is_err());
 }
 
+/// Pins the artifact hash encoding to published SHA-256 vectors.
+///
+/// The hex encoding is hand-rolled because sha2 0.11 returns a digest type
+/// without a `LowerHex` implementation. Hashes are persisted in published
+/// manifests, so the encoding must not drift.
+#[test]
+fn artifact_hash_matches_published_sha256_vectors() {
+    assert_eq!(
+        ArtifactHash::from_bytes(b"").as_str(),
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    );
+    assert_eq!(
+        ArtifactHash::from_bytes(b"abc").as_str(),
+        "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+    );
+    assert_eq!(
+        ArtifactHash::from_bytes(b"vortex-bevy-identity").as_str(),
+        "521d1811fb1823907c841d5ce77d9776c0df70a1c38392bc44c94f735ac98674"
+    );
+}
+
 #[test]
 fn conversion_id_is_deterministic() -> Result<(), Box<dyn Error>> {
     let first = ConversionAggregate::begin(source_identity()?, context()?);

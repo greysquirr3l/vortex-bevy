@@ -5,13 +5,14 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     error::Error,
     fs,
+    hint::black_box,
     io::Write,
     path::PathBuf,
     process,
     sync::Arc,
 };
 
-use criterion::{Criterion, black_box};
+use criterion::Criterion;
 use flate2::{Compression, write::GzEncoder};
 use stats_alloc::{INSTRUMENTED_SYSTEM, Region, Stats, StatsAlloc};
 use vortex_core::{

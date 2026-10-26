@@ -6,6 +6,23 @@ use thiserror::Error;
 
 const HASH_HEX_LENGTH: usize = 64;
 
+const HEX_DIGITS: &[u8; 16] = b"0123456789abcdef";
+
+/// Encodes bytes as lowercase hexadecimal.
+///
+/// sha2 0.11 returns its digest as a `hybrid_array::Array`, which no longer
+/// implements `LowerHex`, so the encoding is done here.
+fn encode_hex(bytes: &[u8]) -> String {
+    let mut encoded = String::with_capacity(bytes.len() * 2);
+    for byte in bytes {
+        let high = HEX_DIGITS.get(usize::from(byte >> 4)).copied().unwrap_or(b'0');
+        let low = HEX_DIGITS.get(usize::from(byte & 0x0f)).copied().unwrap_or(b'0');
+        encoded.push(char::from(high));
+        encoded.push(char::from(low));
+    }
+    encoded
+}
+
 #[derive(Clone, Debug, Eq, Error, PartialEq)]
 pub enum IdentityError {
     #[error("{kind} cannot be empty")]
@@ -142,7 +159,7 @@ impl ArtifactHash {
     #[must_use]
     pub fn from_bytes(bytes: &[u8]) -> Self {
         let digest = Sha256::digest(bytes);
-        Self(format!("{digest:x}"))
+        Self(encode_hex(&digest))
     }
 
     #[must_use]
@@ -195,7 +212,7 @@ impl ConversionId {
     pub fn derive(source: &SourceIdentity, profile_hash: &ArtifactHash) -> Self {
         let input = format!("vortex-conversion-v1:{source}:{profile_hash}");
         let digest = Sha256::digest(input.as_bytes());
-        Self(format!("{digest:x}"))
+        Self(encode_hex(&digest))
     }
 
     /// Parses a conversion id from its hex string form. Accepts any 64-character
