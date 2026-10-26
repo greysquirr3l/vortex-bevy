@@ -9,6 +9,15 @@
 /bridges/** merge=vortex-preserve
 /docs/compatibility_matrix.json merge=vortex-preserve
 
+# Everything else in the repository is text that is stored with LF and
+# checked out with LF on every platform. Without this, Git for Windows
+# checks the sources out with CRLF, and rustfmt rejects the result with
+# "Incorrect newline style" for every file in the workspace.
+#
+# This rule comes first so that the specific rules below still win: the
+# last matching pattern decides each attribute.
+* text=auto eol=lf
+
 # The hash-pinned fixture sources are checked against the SHA-256 recorded in
 # each `.fixture.json`, and the test suite asserts those hashes. Git for
 # Windows checks text files out with CRLF by default, which changes the bytes
