@@ -12,6 +12,19 @@ readonly required_paths=(
 )
 
 failures=0
+
+# The merge-driver rules live in .gitattributes, so the file itself has to be
+# tracked. When it was ignored, the rules protecting the hash-pinned fixtures
+# never reached a clean checkout, and the Windows runner failed the fixture
+# SHA-256 check.
+if [[ ! -e ".gitattributes" ]]; then
+  printf 'error: .gitattributes is missing; the merge-driver and line-ending rules are not applied\n' >&2
+  failures=1
+elif ! git ls-files --error-unmatch -- ".gitattributes" >/dev/null 2>&1; then
+  printf 'error: .gitattributes is not tracked; the rules it holds never reach a clean checkout\n' >&2
+  failures=1
+fi
+
 for path in "${required_paths[@]}"; do
   if [[ ! -e "${path}" ]]; then
     printf 'error: required Vortex project contract path is missing: %s\n' "${path}" >&2

@@ -1,0 +1,25 @@
+# These artifacts are generated or pinned project contracts.  During a merge,
+# preserve the current branch's reviewed copy rather than silently accepting an
+# upstream deletion or an unreviewed replacement.  The local driver is installed
+# by scripts/install-hooks.sh as merge.vortex-preserve.driver=true.
+/plan.toml merge=vortex-preserve
+/features.json merge=vortex-preserve
+/PROGRESS.md merge=vortex-preserve
+/tasks/** merge=vortex-preserve
+/bridges/** merge=vortex-preserve
+/docs/compatibility_matrix.json merge=vortex-preserve
+
+# The hash-pinned fixture sources are checked against the SHA-256 recorded in
+# each `.fixture.json`, and the test suite asserts those hashes. Git for
+# Windows checks text files out with CRLF by default, which changes the bytes
+# and breaks the hash on the Windows runner only. `-text` turns the
+# conversion off in both directions, and `-whitespace` keeps Git from
+# touching the trailing spaces and the final blank line.
+fixtures/production_scale/standard_shader_ball/shaderball.usda -text -whitespace
+fixtures/unsupported/materialx_surface.usda -text -whitespace
+fixtures/minimal_usda/triangle_scene.usda -text -whitespace
+fixtures/malformed/missing_face_indices.usda -text -whitespace
+
+# The pinned PNG is already binary, but naming it keeps the intent explicit
+# and stops a future attribute from reintroducing a conversion.
+fixtures/production_scale/polyhaven_wooden_planks/wooden_planks_diff_1k.png binary
