@@ -13,7 +13,7 @@ viewer the session it needs.
 ## Prerequisites
 
 ```bash
-cargo install cargo-bundle --locked
+cargo install cargo-bundle --version 0.12.0 --locked
 ```
 
 `cargo-bundle` reads `[package.metadata.bundle]` from
@@ -55,9 +55,9 @@ and prints the produced bundle's location.
 | ---------------- | ------------------------------------------------------------------------------------------------------------- |
 | macOS            | `target/release/bundle/osx/Vortex-Bevy.app`                                                                   |
 | Windows          | `target/release/vortex-bevy.exe` (raw release binary; cargo-bundle skipped on Windows, see burtonageo/cargo-bundle#77 / #221 / `WIN32_ERROR(1812)`) |
-| Linux (Debian)   | `target/release/bundle/deb/vortex-bevy_0.1.0_<arch>.deb`                                                      |
-| Linux (Fedora)   | `target/release/bundle/rpm/vortex-bevy-0.1.0.<arch>.rpm`                                                      |
-| Linux (AppImage) | `target/release/bundle/AppImage/Vortex-Bevy_0.1.0_<arch>.AppImage`                                            |
+| Linux (Debian)   | `target/release/bundle/deb/vortex-bevy_0.2.0_<arch>.deb`                                                      |
+| Linux (Fedora)   | `target/release/bundle/rpm/vortex-bevy-0.2.0.<arch>.rpm`                                                      |
+| Linux (AppImage) | `target/release/bundle/AppImage/Vortex-Bevy_0.2.0_<arch>.AppImage`                                            |
 
 The exact format depends on which Linux build tools are on `PATH` at
 build time.

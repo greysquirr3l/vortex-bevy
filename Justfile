@@ -155,7 +155,7 @@ run *args:
 # grants a foreground GUI session to the Bevy viewer window (AppKit on
 # macOS, SxS manifest on Windows, .desktop + icon on Linux).
 #
-# Requires: cargo install cargo-bundle --locked
+# Requires: cargo install cargo-bundle --version 0.12.0 --locked
 # Outputs (one per platform):
 #   - macOS:   target/release/bundle/osx/Vortex-Bevy.app
 #   - Windows: target/release/bundle/windows/  (MSI + bundled .exe + SxS manifest)

@@ -2,10 +2,10 @@
 
 **Status:** Complete — no critical or high-severity findings.
 
-**Scope:** `vortex-bevy` workspace at commit `f308cec`. Both crates
+**Scope:** `vortex-bevy` workspace at the 0.2.0 release commit. Both crates
 (`crates/vortex-core`, `crates/vortex-bevy`), the `bridges/` Python editor
-bridge, and the Rust dependency graph (574 crates against the RustSec advisory
-database, 2026-08-30).
+bridge, and the Rust dependency graph (592 crates against the RustSec advisory
+database, 2026-10-26).
 
 **Reference checklist:** OWASP Top 10 (2021/2025) and the project's
 `Strict project standards` and `Security (non-negotiable)` blocks in
@@ -48,9 +48,9 @@ documents that intent rather than treating absence as a gap.
 | F-06 | SSRF — URL fetch on user behalf                  | —        | N/A        | No URL fetching anywhere in the codebase.                                                                                                                                                                                                   |
 | F-07 | Weak/broken cryptography                         | —        | N/A        | Only `sha2 = "0.11.1"` (SHA-256) for `ArtifactHash` checksums. No MD5, SHA-1, DES, AES, Blowfish, ECB.                                                                                                                                      |
 | F-08 | Disabled TLS certificate verification            | —        | N/A        | No HTTP client in project.                                                                                                                                                                                                                  |
-| F-09 | `rand::thread_rng()` for crypto                  | —        | N/A        | Project is deterministic; no `rand` or `getrandom` dependency, zero call sites.                                                                                                                                                             |
+| F-09 | `rand::thread_rng()` for crypto                  | —        | N/A        | Project is deterministic; the workspace crates do not depend on `rand` or `getrandom` and contain zero call sites. `rand` reaches the graph only transitively, through `bevy_math`.                                                |
 | F-10 | Unsafe deserialization                           | —        | N/A        | Only `serde_json`, `serde_derive`, `ron`, `gltf` — all safe-Rust crates. No `bincode`, `bson`, `postcard`.                                                                                                                                  |
-| F-11 | Path traversal                                   | Info     | Covered    | Systematic `canonicalize + starts_with(root)` confinement in 22 files; see §4.                                                                                                                                                              |
+| F-11 | Path traversal                                   | Info     | Covered    | Systematic `canonicalize + starts_with(root)` confinement in 9 production source files; see §4.                                                                                                                                               |
 | F-12 | Sensitive data in logs                           | Info     | Covered    | `tracing` events are `ConversionId`-correlated and field-allowlisted; no PII or credentials logged.                                                                                                                                         |
 | F-13 | Auth/authz TODO/FIXME                            | —        | N/A        | No HTTP/auth subsystem.                                                                                                                                                                                                                     |
 | F-14 | IV/nonce reuse                                   | —        | N/A        | No encryption code in project.                                                                                                                                                                                                              |
@@ -58,7 +58,7 @@ documents that intent rather than treating absence as a gap.
 | F-16 | Cooked/encrypted/DRM input handling              | Info     | Covered    | Per-asset classification `converted                                                                                                                                                                                                         | baked | requires_adapter | unsupported | rejected`; encryption/license gates are detection-only, never bypassed. |
 | F-17 | Subprocess script provenance                     | Info     | Covered    | Only the checked-in `bridges/unreal/vortex_unreal_*.py` scripts are launched; resolved by canonical path relative to a fixed repository root.                                                                                               |
 | F-18 | Unsafe Rust                                      | —        | N/A        | `unsafe_code = "forbid"` at workspace level; no production occurrences.                                                                                                                                                                     |
-| F-19 | Transitive dependency vulnerabilities            | Info     | Documented | `cargo audit` exit 0 against 1,349 RustSec advisories (587 crates scanned). `cargo deny --all-features check` reports `advisories ok, bans ok, licenses ok, sources ok`. One advisory is carried as a documented, unreachable-code exception — see §8. |
+| F-19 | Transitive dependency vulnerabilities            | Info     | Documented | `cargo audit` exit 0 against 1,378 RustSec advisories (592 crates scanned). `cargo deny --all-features check` reports `advisories ok, bans ok, licenses ok, sources ok`. One advisory is carried as a documented, unreachable-code exception — see §8. |
 | F-20 | Duplicate transitive Windows crates              | Low      | Documented | `windows-sys` (0.52 / 0.59 / 0.60) and `windows_x86_64_msvc` (0.52.6 / 0.53.1) coexist due to `winit`/`bevy_egui`/`arboard` divergence. Windows-only targets; no runtime impact on Linux/macOS or in the conversion pipeline. Not blocking. |
 
 ---
@@ -69,9 +69,10 @@ Workspace-wide grep across `crates/**/*.rs` for credential-shape tokens
 (`api_key`, `apikey`, `API_KEY`, `password`, `passwd`, `secret`, `token`,
 `secrets.toml`, `.env`):
 
-- **Result:** zero production occurrences. The 132 grep matches are all
-  false positives — `Vortex`/`vortex_*` module identifiers and the env-var
-  names listed below.
+- **Result:** zero production occurrences. The 18 grep matches are all
+  false positives — the word `token` in the USD/glTF sense (a schema token,
+  a variant token, a render-context token) and the env-var names listed
+  below.
 - **Env-var usage** is restricted to two patterns:
   - `CARGO_BIN_EXE_vortex-bevy` — Cargo's own test infrastructure for locating
     the built binary in integration tests.
@@ -88,8 +89,9 @@ Out of scope by design. Documented so reviewers do not flag absence as a gap:
 
 - No `sqlx`, `diesel`, `rusqlite`, or any DB driver in `Cargo.toml`.
 - No `reqwest`, `hyper`, `ureq`, `attohttpc`, `surf` (verified across both
-  crates — 22 grep matches are all type names like `UrpSurface`,
-  `UsdPreviewSurface`, false positives).
+  crates — 19 grep matches are all the substring `surf` inside words like
+  `surface` and `UrpSurface`, false positives; the same grep without `surf`
+  returns zero).
 - No `axum`, `actix-web`, `warp`, `rocket`, `tide` server.
 - The Bevy desktop viewer uses `bevy_winit` for windowing only; it does not
   open sockets.
@@ -100,10 +102,10 @@ Every local-file reader is bounded:
 
 | Reader                        | Bound                                                       | Source                                             |
 | ----------------------------- | ----------------------------------------------------------- | -------------------------------------------------- |
-| Unreal bridge report          | 1 MiB (`MAX_REPORT_BYTES`)                                  | `unreal_bridge.rs:21`                              |
+| Unreal bridge report          | 1 MiB (`MAX_REPORT_BYTES`)                                  | `unreal_bridge.rs:25`                              |
 | Static-scene bridge reports   | per-adapter cap                                             | `MAX_STATIC_SCENE_REPORT_BYTES` etc.               |
-| Artifact manifest             | 1 MiB (`DEFAULT_MANIFEST_LIMIT_BYTES`)                      | `crates/vortex-bevy/src/runtime/manifest.rs:41-42` |
-| Python bridge export suffixes | `.fbx`, `.gltf`, `.glb`, `.png`, `.tga`, `.exr` (frozenset) | `bridges/unreal/vortex_unreal_bridge.py:18`        |
+| Artifact manifest             | 1 MiB (`DEFAULT_MANIFEST_LIMIT_BYTES`)                      | `crates/vortex-bevy/src/runtime/manifest.rs:68-69` |
+| Python bridge export suffixes | `.fbx`, `.gltf`, `.glb`, `.png`, `.tga`, `.exr` (frozenset) | `bridges/unreal/vortex_unreal_bridge.py:20`        |
 
 All `serde_json::from_*` and `ron::from_*` callsites are preceded by a
 `fs::metadata(...).len()` size check, so an oversized file is rejected
@@ -118,18 +120,35 @@ not silently coerced.
 ## 4. Path traversal (F-11)
 
 Pattern across the codebase: **canonicalize → `starts_with(root)` → reject
-otherwise**. 91 grep matches across 22 files demonstrate consistent
-application:
+otherwise**. The pattern appears in 9 production source files:
+
+- `crates/vortex-bevy/src/runtime/manifest.rs`
+- `crates/vortex-core/src/adapters/secondary/artifact_store.rs`
+- `crates/vortex-core/src/adapters/secondary/unity.rs`
+- `crates/vortex-core/src/adapters/secondary/unity_static_scene.rs`
+- `crates/vortex-core/src/adapters/secondary/unreal_bridge.rs`
+- `crates/vortex-core/src/adapters/secondary/unreal_package.rs`
+- `crates/vortex-core/src/adapters/secondary/usd_packages.rs`
+- `crates/vortex-core/src/adapters/secondary/usd_stage.rs`
+- `crates/vortex-core/src/domain/manifest.rs`
+
+The following call sites show consistent application:
 
 - `unreal_package.rs:225-227` — `package_path.canonicalize() + if !
 package_path.starts_with(&self.project_root)`.
 - `unity.rs:325-327` — `fs::canonicalize(candidate) + if !canonical.starts_with(&request.project_directory)`.
-- `unreal_bridge.rs:272-275, 292-295, 518-520` — bridge script, report path,
+- `unreal_bridge.rs:272-275, 292, 518` — bridge script, report path,
   output paths all confined to their declared root.
-- `artifact_store.rs:135-136, 457-459` — output root and per-artifact path
-  confinement.
+- `artifact_store.rs:136, 508` — output root canonicalization and
+  per-artifact path confinement.
 - `unity_static_scene.rs:689-695` — staged texture root confinement.
-- `godot_static_scene.rs:259` — staging root confinement for outputs.
+
+`godot_static_scene.rs:259` confines its output path lexically rather than
+by canonicalization: it rejects an empty output, a backslash, an absolute
+path, and any `..` component, then checks
+`staging_root.join(output_path).starts_with(staging_root)`. The lexical
+check is the correct form there because the output path is a relative name
+that has not been written yet, so there is nothing to canonicalize.
 
 The Python bridge mirrors this with `_normalized(path).relative_to(_normalized(root))`
 (`bridges/unreal/vortex_unreal_bridge.py:_confined`).
@@ -169,9 +188,13 @@ project-provided scripts (`vortex_unreal_bridge.py` docstring:
   for content-addressable manifest verification. SHA-256, no MD5 or SHA-1.
 - **Encryption:** zero. No `aes`, `chacha20poly1305`, `argon2`, `bcrypt`,
   or `scrypt` dependencies. No IV/nonce generation, because no encryption.
-- **RNG:** zero. No `rand`, `getrandom`, `OsRng`, `thread_rng`. Project
-  determinism rule is enforced: all outputs depend only on typed source
-  identities and the export profile.
+- **RNG:** zero in project code. The workspace crates do not depend on `rand`
+  or `getrandom`, and contain no `OsRng`, `thread_rng`, or other RNG call
+  site. `rand` and `getrandom` do appear in the resolved graph, reached
+  transitively through `bevy_math` and the Bevy platform layers; they are
+  not used for anything the project controls. Project determinism rule is
+  enforced: all outputs depend only on typed source identities and the
+  export profile.
 - **Deserialization formats:** `serde_json`, `ron`, `serde_derive`, `gltf`'s
   typed binary parser. No `bincode`, `bson`, `postcard`, `rmp`, or
   `MessagePack`. `serde_json::from_*` and `ron::from_*` callsites are bounded
@@ -182,14 +205,17 @@ project-provided scripts (`vortex_unreal_bridge.py` docstring:
 
 `tracing` is used for structured observation. Audit summary:
 
-- 5 production callsites, all in `crates/vortex-core/src/application/command/`:
-  - `execute_conversion.rs:102,113` — `info_span!` and `info!` carrying
-    `ConversionId`, `action`.
-  - `stream_usd.rs:307,342` — `info!` with `submission_id`, `encoding`,
-    `succeeded`.
-- All fields are typed `ConversionId`/`SubmissionId` identifiers or boolean
-  success flags. No source file paths, no source object paths, no PII, no
-  credentials.
+- 4 production callsites, all in `crates/vortex-core/src/application/command/`:
+  - `execute_conversion.rs:102` — `info_span!` carrying `conversion_id`,
+    `source_engine`, `source_fingerprint`.
+  - `execute_conversion.rs:113` — `info!` carrying `action`.
+  - `stream_usd.rs:307` — `info!` with `submission_id`, `encoding`.
+  - `stream_usd.rs:342` — `info!` with `submission_id`, `succeeded`.
+- All fields are typed `ConversionId`/`SubmissionId` identifiers, a
+  SHA-256 `source_fingerprint` over the redacted source identity, a
+  source-engine tag, a plain/gzip `encoding` label, an `action` tag, or a
+  boolean success flag. No source file paths, no source object paths, no
+  project roots, no PII, no credentials.
 - T27 ("redacted `ConversionId`-correlated tracing") is in scope; the audit
   verifies the contract holds at every emit site.
 
@@ -197,8 +223,8 @@ project-provided scripts (`vortex_unreal_bridge.py` docstring:
 
 ```
 $ cargo audit
-Loaded 1349 security advisories
-Scanning Cargo.lock for vulnerabilities (587 crate dependencies)
+Loaded 1378 security advisories
+Scanning Cargo.lock for vulnerabilities (592 crate dependencies)
 EXIT=0
 ```
 
@@ -239,9 +265,18 @@ Production-code lint posture:
   `clippy::panic = "deny"`, `clippy::indexing_slicing = "deny"`,
   `clippy::cast_ptr_alignment = "deny"`, `clippy::suspicious = "deny"`.
 - `cargo l` (the project's reproducible lint alias) passes clean.
-- `#[expect(...)]` suppressions are used sparingly and only for
-  cross-platform `const fn` cfg gating (e.g. `linux_process_memory.rs:87`,
-  `desktop.rs:132`). Each carries a documented reason.
+- `#[expect(...)]` suppressions are used sparingly and each carries a
+  documented reason. There are ten in production code: seven in
+  `crates/vortex-bevy/src/runtime/desktop.rs` (Bevy ECS system parameters
+  taken by value, a controller with many distinct resource parameters, and
+  bounded numeric casts), one in `crates/vortex-bevy/src/cli.rs` (an
+  accepted empty stage selection), and two in
+  `crates/vortex-core/src/adapters/secondary/glb.rs` (GLB assembly with many
+  deterministic tables, and a finite `f64` time narrowed to `f32`). A
+  further expectation in
+  `crates/vortex-core/src/adapters/secondary/linux_process_memory.rs:90`
+  is gated by `cfg_attr` to the targets where the lint actually fires,
+  because `-D warnings` turns an unfulfilled expectation into an error.
 
 ## 10. Out-of-scope inputs (F-16)
 
@@ -260,9 +295,13 @@ Cooked/encrypted/unowned/DRM-protected inputs are detected and classified
 1. **F-20 (Windows crate fan-out):** track `winit`/`bevy_egui`/`arboard`
    upstream alignment on `windows-sys` 0.59+. Not blocking — Windows
    compilation already works; this is purely a `cargo tree` noise issue.
-2. **Documentation:** add a one-paragraph "security scope" note to
+   The resolved graph currently carries `windows-sys` 0.52.0, 0.59.0,
+   0.60.2, and 0.61.2.
+2. ~~**Documentation:** add a one-paragraph "security scope" note to
    `README.md` stating the offline-CLI + Bevy-viewer threat model, so future
-   contributors do not mistake the absence of HTTP auth as a gap.
+   contributors do not mistake the absence of HTTP auth as a gap.~~ **Done.**
+   The note is in `README.md`, and `SECURITY.md` and
+   `book/src/explanation/security.md` carry the same scope.
 
 ---
 

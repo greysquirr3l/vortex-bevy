@@ -60,7 +60,7 @@ The CLI does not:
 
 ## Path traversal
 
-The 22 source files that read from disk use a consistent pattern:
+The 9 production source files that read from disk use a consistent pattern:
 
 ```rust,ignore
 let root = canonicalize(root)?;
@@ -158,7 +158,7 @@ covers 20 categories with no critical or high-severity findings.
 Notable items:
 
 - **F-11 (path traversal)** — Covered by systematic `canonicalize +
-starts_with(root)` in 22 source files plus the Python bridge
+starts_with(root)` in 9 production source files plus the Python bridge
   equivalent.
 - **F-15 (subprocess injection)** — Covered by typed
   `Command::new(...).args(...)` with no shell.

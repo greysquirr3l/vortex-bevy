@@ -5,7 +5,7 @@
 # GUI session AppKit/win32/X11 require to open a winit window).
 #
 # Requires:
-#   - cargo install cargo-bundle --locked
+#   - cargo install cargo-bundle --version 0.12.0 --locked
 #   - On Linux: dpkg-deb (deb), rpmbuild (rpm), or appimagetool (AppImage)
 #              depending on the format you want. cargo-bundle picks whatever
 #              is on PATH.
@@ -33,7 +33,7 @@ readonly BUNDLE_ROOT="${ROOT}/target/release/bundle"
 cd "${ROOT}"
 
 if ! command -v cargo-bundle >/dev/null 2>&1; then
-  printf 'cargo-bundle is not installed. Install with:\n  cargo install cargo-bundle --locked\n' >&2
+  printf 'cargo-bundle is not installed. Install with:\n  cargo install cargo-bundle --version 0.12.0 --locked\n' >&2
   exit 1
 fi
 

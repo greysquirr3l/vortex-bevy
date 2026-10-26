@@ -4,6 +4,10 @@ All notable repository changes are documented here. Versioning follows the suppo
 
 ## Unreleased
 
+## 0.2.0 - 2026-10-26
+
+The desktop viewer now opens a real native window on every platform, and the release process runs green on Linux, macOS, and Windows. The runtime and CLI continue to target Bevy 0.20 (`bevy_egui` 0.43.1); generated manifests still declare `minimum_bevy_version: "0.20"` and the runtime still refuses a manifest that declares any other version, so the manifest schema version is unchanged at 1 and artifacts produced by 0.1.0 remain loadable.
+
 ### Changed
 
 - Every GitHub Action is now pinned to a commit SHA on a Node 24 release. The previous pins targeted Node 20 actions, and GitHub removed the Node 20 runtime from hosted runners on 2026-09-16, so the workflows could not start. `actions/checkout` moves to v7.0.1, `actions/setup-python` to v7.1.0, `actions/setup-dotnet` to v6.0.0, `gitleaks/gitleaks-action` to v3.0.0, `github/codeql-action` to v4.39.1, `actions/upload-artifact` to v7.0.2, `actions/download-artifact` to v8.0.2, `actions/upload-pages-artifact` to v5.0.0, `actions/deploy-pages` to v5.0.1, and `actions/configure-pages` to v6.0.0. `softprops/action-gh-release` was already pinned to v3.0.3; only its version comment was wrong.
@@ -39,6 +43,19 @@ All notable repository changes are documented here. Versioning follows the suppo
 - Bevy's logger is enabled for the desktop viewer, so renderer, asset, and windowing diagnostics reach the operator instead of failing silently.
 - A typed `published_conversion_asset_root` helper that resolves the directory a published conversion's assets are served from.
 - A workflow action contract check that resolves the `action.yml` of every pinned action and verifies that each `with:` key names a declared input and that no required input is missing. `actionlint` does not resolve remote actions, so it cannot catch either mistake. The check runs in the CI quality job and in the release readiness script, and `scripts/test-workflow-actions.sh` covers its parsing rules against synthetic manifests.
+
+### Security
+
+- The `.gitattributes` file that carries the line-ending and merge-driver rules had been deleted in an earlier cleanup commit and then added to `.gitignore`, so its rules never reached a clean checkout. The file is tracked again, the hash-pinned USDA fixtures carry `-text` so the line-ending conversion is off in both directions, and `scripts/check-preserved-contracts.sh` now fails the build when `.gitattributes` is missing or untracked.
+- The path-confinement count in `README.md`, `SECURITY.md`, and `docs/security_audit_t30.md` claimed 22 source files use `canonicalize + starts_with(root)`. The reproducible count is 9 production source files, and the audit document now lists them by name instead of asserting a number. The audit's line references were also stale and are now accurate.
+- The audit document claimed the project has no `rand` or `getrandom` dependency. Both are present in the resolved graph, reached transitively through `bevy_math`. The workspace crates depend on neither and contain zero RNG call sites; the audit now says so precisely rather than implying an absent graph entry.
+- The audit document claimed the project logs only `ConversionId`, `SourceEngine`, `SubmissionId`, and success booleans. The tracing span also carries a SHA-256 `source_fingerprint` over the redacted source identity, an `encoding` label, and an `action` tag. None of those is sensitive, and the field list now matches the emit sites.
+- The CodeQL workflow used `build-mode: manual`, which the Rust extractor does not support, so the job failed during database creation and never produced results. It now uses `build-mode: none`, and the toolchain and build steps that manual mode needed are gone.
+
+### Compatibility
+
+- The desktop viewer's native window now opens on every supported platform, including macOS 26 (Tahoe). The 0.1.0 release attributed the missing window to winit 0.30.13 on macOS 26; that was a misdiagnosis. The real cause was that the `bevy_winit` feature was never enabled on the `bevy` dependency, so `DefaultPlugins` never installed `WinitPlugin` and the viewer had no event loop at all on any platform.
+- Generated manifests record the converter version as `0.2.0` instead of `0.1.0`. The manifest schema version is unchanged at 1, the runtime checks only that the field is non-empty, and the `minimum_bevy_version` compatibility gate is unaffected, so artifacts produced by 0.1.0 remain loadable by this release.
 
 ## 0.1.0 - 2026-10-22
 

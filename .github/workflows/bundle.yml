@@ -75,7 +75,7 @@ jobs:
             #     error) and #221 (Windows bundling failing in GH
             #     Actions). The MSI keypath column also rejects
             #     hyphens in the binary name, which `vortex-bevy` hits.
-            #   * exe: cargo-bundle v0.11's exe emitter tries to embed
+            #   * exe: cargo-bundle's exe emitter tries to embed
             #     an icon + version resources into the PE binary via
             #     `winres_edit`, which fails with WIN32_ERROR(1812)
             #     `ERROR_RESOURCE_DATA_NOT_FOUND` when the source
@@ -99,16 +99,21 @@ jobs:
           toolchain: 1.97.1
 
       - name: Install cargo-bundle
-        # Pinned via --locked so the dependency graph matches what the
-        # local developer uses (`cargo install cargo-bundle --locked`).
-        # Skipped on Windows: cargo-bundle v0.11's Windows emitters
-        # are both broken (see the windows-latest matrix entry above).
+        # The version is pinned explicitly. cargo-bundle v0.12 parses the
+        # bundle metadata table with `deny_unknown_fields` and moved the
+        # macOS-specific keys under a typed `[osx]` sub-table, so the
+        # manifest in crates/vortex-bevy/Cargo.toml only builds against
+        # that version. An unpinned install would break the release
+        # whenever cargo-bundle changes its schema again.
+        #
+        # Skipped on Windows: cargo-bundle's Windows emitters are both
+        # broken (see the windows-latest matrix entry above).
         shell: bash
         run: |
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
             echo "Skipping cargo-bundle on Windows (both MSI and exe emitters broken; see artifact_paths rationale)"
           else
-            cargo install cargo-bundle --locked
+            cargo install cargo-bundle --version 0.12.0 --locked
           fi
 
       - name: Build release binary

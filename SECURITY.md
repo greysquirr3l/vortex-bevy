@@ -17,8 +17,15 @@ subprocess input, multi-user access, or arbitrary editor installations.
 
 ## Supported versions
 
-Only the **latest commit on `main`** receives security updates. We do
-not maintain a release-tagged backports branch.
+| Version | Supported |
+| ------- | --------- |
+| 0.2.x   | Yes       |
+| 0.1.x   | No        |
+| < 0.1   | No        |
+
+Fixes land on `main` and are released from there. We do not maintain a
+release-tagged backports branch, so an issue reported against 0.1.x is
+fixed in the next release rather than patched in place.
 
 ## Reporting a vulnerability
 
@@ -82,13 +89,15 @@ Notable items the audit verifies:
   from typed inputs.
 - **No shell.** Subprocess invocation uses `Command::new(...).args(...)`
   with `Vec<OsString>` arguments; no `format!` into a command line.
-- **Systematic path confinement.** 22 source files use
+- **Systematic path confinement.** 9 production source files use
   `canonicalize + starts_with(root)`. The Python bridge uses
   `_normalized + relative_to`. Cooked-sidecar rejection at the
   `inspect` boundary. The manifest parser enforces valid relative paths
-- **No PII in logs.** `tracing` events carry only `ConversionId`,
-  `SourceEngine`, `SubmissionId`, and success booleans. No source paths,
-  no project roots, no environment variables, no credentials.
+- **No PII in logs.** `tracing` events carry only typed identifiers
+  (`ConversionId`, `SubmissionId`, `SourceEngine`), a SHA-256
+  `source_fingerprint` over the redacted source identity, an `encoding`
+  label, an `action` tag, and success booleans. No source paths, no project
+  roots, no environment variables, no credentials.
 - **Dependency advisories.** `cargo audit` is clean against the latest
   RustSec database; `cargo deny` is clean on bans, licenses, and
   sources.
@@ -101,8 +110,13 @@ Notable items the audit verifies:
   `cast_ptr_alignment`, `suspicious` are all denied** at the workspace
   level.
 - **No network crates** in the dependency graph (verified by `cargo deny`).
-- **Bridge tooling is pinned** via `scripts/check-bridge-quality.sh`
-  (ruff 0.14.3, gdtoolkit 4.2.2, csharpier 1.3.0, pytest 8.3.5).
+- **Bridge tooling is pinned** in the bridge-quality CI job:
+  `ruff==0.14.3`, `gdtoolkit==4.2.2`, `pytest==8.3.5`, `jsonschema==4.23.0`,
+  and `setuptools<81` (gdtoolkit 4.2.2 still imports `pkg_resources`, which
+  setuptools 81 removed). The Unity C# lint and build run through
+  `dotnet csharpier` and `dotnet build`; they are host-specific and are
+  skipped with a warning when the tools are absent, and `csharpier` is not
+  version-pinned.
 
 ## Hardening the build:
 
@@ -118,7 +132,11 @@ Notable items the audit verifies:
 The CI workflow at
 [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs the same
 gates across Linux, macOS, and Windows runners, plus separate
-`bridge-quality`, `supply-chain`, and `secret-scan` jobs.
+`Authorized Editor bridge quality`, `Supply chain and fixture policy`,
+and `Secret scan` jobs. Those display names are what the branch
+protection rule on `main` requires, and
+`scripts/check-branch-protection.sh` compares the rule against the
+workflow so a job rename cannot silently break it.
 
 ## Acknowledgements
 

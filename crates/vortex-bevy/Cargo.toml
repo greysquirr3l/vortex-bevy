@@ -24,7 +24,7 @@ bevy_winit.workspace = true
 clap.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-vortex-core = { path = "../vortex-core", version = "0.1.0" }
+vortex-core = { path = "../vortex-core", version = "0.2.0" }
 
 [dev-dependencies]
 criterion.workspace = true
@@ -39,7 +39,7 @@ harness = false
 #   - Windows: target/release/bundle/windows/vortex-bevy.msi
 #   - Linux:   target/release/bundle/{deb,rpm,AppImage}/vortex-bevy_*
 #
-# cargo-bundle v0.11 reads per-binary settings from
+# cargo-bundle v0.12 reads per-binary settings from
 # `[package.metadata.bundle.bin.<name>]`. Settings at the
 # top-level `[package.metadata.bundle]` are ignored when
 # `--bin <name>` is passed to cargo-bundle (which is what the
@@ -47,15 +47,12 @@ harness = false
 # metadata lives under the `.bin.vortex-bevy` table below.
 [package.metadata.bundle.bin.vortex-bevy]
 name = "Vortex-Bevy"
-version = "0.1.0"
+version = "0.2.0"
 identifier = "dev.greysquirr3l.vortex-bevy"
 category = "DeveloperTool"
 short_description = "Authorized Unreal Engine and OpenUSD asset conversion to deterministic Bevy 0.20 runtime artifacts."
 long_description = "Vortex-Bevy is an offline CLI plus an optional Bevy 0.20 desktop viewer for authorized Unreal Engine source-project assets, Unity URP static scenes, and selected OpenUSD stages."
-homepage = "https://github.com/greysquirr3l/vortex-bevy"
-publisher = "Nick Campbell"
-license = "MIT OR Apache-2.0"
-# Bundle icon paths. cargo-bundle v0.11 picks the best format per platform
+# Bundle icon paths. cargo-bundle v0.12 picks the best format per platform
 # automatically (.icns on macOS, .ico on Windows, .png on Linux) from a
 # single `icon` array. Files live under crates/vortex-bevy/assets/bundle/
 # and are read at bundle-build time from the workspace root.
@@ -65,9 +62,14 @@ icon = [
     "crates/vortex-bevy/assets/bundle/vortex-bevy-512.png",
     "crates/vortex-bevy/assets/bundle/vortex-bevy-128.png",
 ]
-# macOS-specific
-osx_frameworks = []
-osx_minimum_system_version = "11.0"
+# cargo-bundle v0.12 parses this table with `deny_unknown_fields`, so
+# every key here must be one the crate declares. The homepage, publisher,
+# and license fields that older cargo-bundle versions ignored are read from
+# the package's own `homepage` and `license` metadata instead, and the
+# macOS-specific keys moved under the typed `[osx]` sub-table.
+[package.metadata.bundle.bin.vortex-bevy.osx]
+frameworks = []
+minimum_system_version = "11.0"
 
 [lints]
 workspace = true
